@@ -20,13 +20,6 @@ x   Solve with math optimization
 
 
 def DrawGrid():
-    '''
-    FOR COLOURS:
-
-    CURRENTLY : (204, 102, 153) PINKISH?
-
-    :return:
-    '''
     # Draw the lines
     for i in range(9):
         for j in range(9):
@@ -36,6 +29,21 @@ def DrawGrid():
                 # inserting the default values
                 text = a_font.render(str(grid[i][j]), True, (0, 0, 0))
                 screen.blit(text, (i * inc + 18, j * inc + 10))
+            elif len(guesses[i][j]) > 0:
+                '''
+                print(guesses[i][j])
+                for value in guesses[i][j]:
+
+                    text = b_font.render(str(value), True, (0, 0, 0))
+
+                    # position inside the cell (3x3 grid)
+                    row = (value - 1) // 3
+                    col = (value - 1) % 3
+
+                    pos_x = x * inc + 5 + col * (inc // 3)
+                    pos_y = y * inc + 5 + row * (inc // 3)
+                    screen.blit(text, (pos_x, pos_y))
+                    '''
             else:
                 pygame.draw.rect(screen, (255,229,204), (i * inc, j * inc, inc + 1, inc + 1))
     # Draw lines horizontally and vertically to form grid
@@ -63,24 +71,11 @@ def SetMousePosition(p):
         y = p[1] // inc
 
 
-'''
-# checks if inserted val is valid
-def IsUserValueValid(m, i, j, v):
-    for ii in range(9):
-        if m[i][ii] == v or m[ii][j] == v:  # checks cols and rows
-            return False
-    # checks the box/block
-    ii = i // 3
-    jj = j // 3
-    for i in range(ii * 3, ii * 3 + 3):
-        for j in range(jj * 3, jj * 3 + 3):
-            if m[i][j] == v:
-                return False
-    return True
-'''
 def IsUserValueValid(grid, completed_grid, row,col, value):
-    if completed_grid[row][col] == value: return True
-    return False
+    if completed_grid[row][col] == value:
+        return True
+    else:
+        return False
 
 
 # highlighting the selected cell
@@ -117,18 +112,22 @@ def InsertGuess(value, x, y):
 def DrawGuesses():
     global GuessValue
     if GuessValue > 0:
-        for value in guesses[x][y]:
-            text = guess_font.render(str(value), True, (120, 120, 120))
+        if grid[int(x)][int(y)] == 0:
+            InsertGuess(GuessValue, x, y)
+            pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
+            for value in guesses[x][y]:
+                #text = guess_font.render(str(GuessValue), True, (120, 120, 120))
+                text = b_font.render(str(value), True, (0, 0, 0))
 
-            # position inside the cell (3x3 grid)
-            row = (value - 1) // 3
-            col = (value - 1) % 3
+                # position inside the cell (3x3 grid)
+                row = (value - 1) // 3
+                col = (value - 1) % 3
 
-            pos_x = x * inc + 5 + col * (inc // 3)
-            pos_y = y * inc + 5 + row * (inc // 3)
-
-            screen.blit(text, (pos_x, pos_y))
-            GuessValue = 0
+                pos_x = x * inc + 5 + col * (inc // 3)
+                pos_y = y * inc + 5 + row * (inc // 3)
+                screen.blit(text, (pos_x, pos_y))
+                GuessValue = 0
+        GuessValue = 0
 
 def IsUserWin():
     for i in range(9):
@@ -223,27 +222,51 @@ def HandleEvents():
                 #if event.key == pygame.K_1:
                 #    UserValue = 1
                 if event.key == pygame.K_1:
-                    if event.key == pygame.K_LSHIFT:
-                        print('SHIFT')
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                         GuessValue = 1
                     else:
                         UserValue = 1
                 if event.key == pygame.K_2:
-                    UserValue = 2
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 2
+                    else:
+                        UserValue = 2
                 if event.key == pygame.K_3:
-                    UserValue = 3
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 3
+                    else:
+                        UserValue = 3
+
                 if event.key == pygame.K_4:
-                    UserValue = 4
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 4
+                    else:
+                        UserValue = 4
                 if event.key == pygame.K_5:
-                    UserValue = 5
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 5
+                    else:
+                        UserValue = 5
                 if event.key == pygame.K_6:
-                    UserValue = 6
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 6
+                    else:
+                        UserValue = 6
                 if event.key == pygame.K_7:
-                    UserValue = 7
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 7
+                    else:
+                        UserValue = 7
                 if event.key == pygame.K_8:
-                    UserValue = 8
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 8
+                    else:
+                        UserValue = 8
                 if event.key == pygame.K_9:
-                    UserValue = 9
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        GuessValue = 9
+                    else:
+                        UserValue = 9
                 if event.key == pygame.K_c:
                     SetGridMode(0)
                 if event.key == pygame.K_e:
@@ -319,6 +342,5 @@ if __name__ == '__main__':
     IsSolving = False
     guesses = [[set() for _ in range(9)] for _ in range(9)]
     guess_font = pygame.font.SysFont(None, 20)
-    print(guesses)
 
     GameThread()
