@@ -84,19 +84,24 @@ def get_random_sudoku(number_of_digits):
 
 
     counter = 0
+    summe_numbers = 0
     for i in range(81):
         random_row = temp[i] // 9
         random_column = temp[i] % 9
 
+
         if grid[random_row][random_column] != 0:
             number = grid[random_row][random_column]
 
+
             grid[random_row][random_column] = 0
-            solution = sudoku_test_unique(grid, complete_grid, False)
-            if abs(solution)>0:
+            solution, termination = sudoku_test_unique(grid, complete_grid, False)
+
+            if termination:
                 grid[random_row][random_column] = number
             else:
                 counter += 1
+                summe_numbers += number
                 if counter == (81 - number_of_digits):
                     break
     return grid, complete_grid
@@ -122,7 +127,7 @@ if __name__ == '__main__':
     complete_grid = grid_test.copy()
 
     sudoku1, sudoku1solution = get_random_sudoku(number_of_given_digits)
-    present_sudoku(sudoku1solution)
+
     '''
     # NEED THIS TO CREATE A DIFFERENT LIST, DONT ASK PLEASE
     complete_grid_test = [[0 for i in range(9)] for j in range(9)]
@@ -143,7 +148,3 @@ if __name__ == '__main__':
     print(complete_grid_test)
     '''
 
-
-
-    #random_grid2 = random_grid2(7)
-    #print(random_grid2)

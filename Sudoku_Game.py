@@ -34,6 +34,7 @@ x   Solve with math optimization
 
 
 def DrawGrid():
+    global grid, complete_grid
     # Draw the lines
     for i in range(9):
         for j in range(9):
@@ -58,6 +59,7 @@ def DrawGrid():
 
 # Solving with mathematical mixed integer model
 def Solve_Mathematical(gridArray):
+    global complete_grid
     grid = sudoku_test(gridArray, False)
     for i in range(9):
         for j in range(9):
@@ -66,14 +68,15 @@ def Solve_Mathematical(gridArray):
 
 # setting the initial position
 def SetMousePosition(p):
-    global x, y
+    global x, y, complete_grid
     if p[0] < width_screen and p[1] < width_screen:
         x = p[0] // inc
         y = p[1] // inc
 
 
-def IsUserValueValid(grid, completed_grid, row,col, value):
-    if completed_grid[row][col] == value:
+def IsUserValueValid(grid, complete_grid, row,col, value):
+    if round(complete_grid[row][col]) == round(value):
+
         return True
     else:
         return False
@@ -81,6 +84,7 @@ def IsUserValueValid(grid, completed_grid, row,col, value):
 
 # highlighting the selected cell
 def DrawSelectedBox():
+    global grid, complete_grid
     if int(x) > 8 or int(y) > 8 or int(x) < 0 or int(y) < 0:
         return
 
@@ -99,19 +103,21 @@ def DrawSelectedBox():
 
 # insert value entered by user
 def InsertValue(Value):
+    global grid, complete_grid
     grid[int(x)][int(y)] = Value
     guesses[x][y].clear()
     text = a_font.render(str(Value), True, (0, 0, 0))
     screen.blit(text, (x * inc + 15, y * inc + 15))
 
 def InsertGuess(value, x, y):
+    global grid, complete_grid
     if value in guesses[x][y]:
         guesses[x][y].remove(value)   # toggle off
     else:
         guesses[x][y].add(value)      # toggle on
 
 def DrawGuesses():
-    global GuessValue
+    global GuessValue, grid, complete_grid
     if GuessValue > 0:
         if grid[int(x)][int(y)] == 0:
             InsertGuess(GuessValue, x, y)
@@ -131,6 +137,7 @@ def DrawGuesses():
         GuessValue = 0
 
 def IsUserWin():
+    global grid, complete_grid
     for i in range(9):
         for j in range(9):
             if grid[int(i)][int(j)] == 0:
@@ -139,6 +146,7 @@ def IsUserWin():
 
 
 def DrawModes():
+    global grid, complete_grid
     TitleFont = pygame.font.SysFont("times", 20, "bold")
     AttributeFont = pygame.font.SysFont("times", 20)
     screen.blit(TitleFont.render("Game Settings", True, (0, 0, 0)), (15, 505))
@@ -150,6 +158,7 @@ def DrawModes():
 
 
 def DrawSolveButton():
+    global grid, complete_grid
     events = pygame.event.get()
     Button = pw.button.Button(
         screen, 350, 600, 120, 50, text='Solve',
@@ -164,6 +173,7 @@ def DrawSolveButton():
 
 
 def DisplayMessage(Message, Interval, Color):
+    global grid, complete_grid
     screen.blit(a_font.render(Message, True, Color), (220, 530))
     pygame.display.update()
     pygame.time.delay(Interval)
@@ -173,7 +183,7 @@ def DisplayMessage(Message, Interval, Color):
 
 
 def SetGridMode(Mode):
-    global grid
+    global grid, complete_grid
     screen.fill((255, 255, 255))
     DrawModes()
     DrawSolveButton()
@@ -190,16 +200,18 @@ def SetGridMode(Mode):
             [0, 0, 0, 0, 0, 0, 0, 0, 0]
         ]
     elif Mode == 1:  # For easy mode
-        grid, completed_grid = get_random_sudoku(35)
+        grid, complete_grid = get_random_sudoku(35)
     elif Mode == 2:  # For average mode
-        grid, completed_grid = get_random_sudoku(30)
+        grid, complete_grid = get_random_sudoku(30)
+
     elif Mode == 3:  # For hard mode
-        grid, completed_grid = get_random_sudoku(25)
+        grid, complete_grid = get_random_sudoku(25)
+
 
 
 
 def HandleEvents():
-    global IsRunning, grid, x, y, UserValue, GuessValue
+    global IsRunning, grid, complete_grid,  x, y, UserValue, GuessValue
     events = pygame.event.get()
     for event in events:
         # Quit the game window
@@ -290,7 +302,7 @@ def HandleEvents():
 
 
 def DrawUserValue():
-    global UserValue, IsSolving
+    global UserValue, IsSolving, grid, complete_grid
     if UserValue > 0:
         if IsUserValueValid(grid, complete_grid, x, y, UserValue):
             if grid[int(x)][int(y)] == 0:
@@ -306,6 +318,7 @@ def DrawUserValue():
             UserValue = 0
 
 def InitializeComponent():
+    global grid, complete_grid
     DrawGrid()
     DrawSelectedBox()
     DrawModes()
@@ -314,6 +327,7 @@ def InitializeComponent():
 
 
 def GameThread():
+    global grid, complete_grid
     InitializeComponent()
     while IsRunning:
         HandleEvents()

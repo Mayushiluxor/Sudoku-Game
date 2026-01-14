@@ -3,6 +3,9 @@
 from pyomo.environ import *
 import os
 import sys
+import logging
+
+logging.getLogger('pyomo.core').setLevel(logging.ERROR)
 
 '''
 SOLVING SUDOKU and creating sudoku grid out of nothing
@@ -119,7 +122,7 @@ def transfrom_solution_back(model, tee_solution):
     for row in range(9):
         for col in range(9):
             for number in range(9):
-                if round(model.x[row,col,number].value) == 1:
+                if model.x[row,col,number].value == 1:
                     new_grid[row][col] = number+1
     if tee_solution:
         '''
@@ -127,6 +130,15 @@ def transfrom_solution_back(model, tee_solution):
         for i in range(9):
             print(new_grid[i])
         '''
+    return new_grid
+
+def transform_grid_to_binary(grid):
+    new_grid = [[[0 for d in range(9)] for i in range(9)] for j in range(9)]
+    for i in range(9):
+        for j in range(9):
+            for d in range(9):
+                if grid[i][j] == d+1:
+                    new_grid[i][j][d] = 1
     return new_grid
 
 def sudoku_test(grid, tee_test):
@@ -144,6 +156,7 @@ def solve_model_unique(model, solution_grid, tee_test):
 
 
     def objective_rule_unique(model):
+        '''
         summe = 0
         for i in range(9):
             for j in range(9):
@@ -153,15 +166,9 @@ def solve_model_unique(model, solution_grid, tee_test):
                     if model.x[i,j,d].value != None:
                         summand2 += model.x[i,j,d].value*(d+1)
                 summe += abs(summand2 - summand1)
-                '''
-                if abs(summand1 - summand2) >0:
-                    print('SHOW ME')
-                    print(summand1, summand2)
-                    print(model.x[i,j,6].value)
-                    print(i,j)
-        print('SUMME' , summe)
-        '''
         return summe
+        '''
+        return 0
 
         #return (sum(abs(model.x[i, j, k]*(k+1) - solution_grid[i][j]) for i in model.row for j in model.column for k in model.digit))
 
@@ -174,21 +181,15 @@ def solve_model_unique(model, solution_grid, tee_test):
 
     solver = SolverFactory('scip',
                            executable='D:\\scipoptsuite-10.0.0-win-x64_ZIP\\scipoptsuite-10.0.0-win-x64\\bin\\scip')
-    solver.options['limits/bestsol'] = 1
+    solver.options['limits/bestsol'] = 2
     opt = solver.solve(model, tee=tee_test, logfile="TEST.txt")
 
-    '''
-    for i in range(9):
-        for j in range(9):
-            print(solution_grid[i][j])
-            for d in range(9):
-                if round(model.x[i,j,d].value) != 0:
-                    print(model.x[i,j,d].value*(d+1))
-    '''
 
-
-    summe = sum(abs(model.x[i, j, k].value)*(k+1) - solution_grid[i][j] for i in model.row for j in model.column for k in model.digit)
-
+    if (opt.solver.status == SolverStatus.ok) and (
+            opt.solver.termination_condition == TerminationCondition.optimal):
+        termination = True
+    elif (opt.solver.termination_condition == TerminationCondition.infeasible):
+        termination = False
     summe = 0
     for i in range(9):
         for j in range(9):
@@ -198,10 +199,8 @@ def solve_model_unique(model, solution_grid, tee_test):
                 if model.x[i, j, d].value != None:
                     summand2 += model.x[i, j, d].value * (d + 1)
             summe += abs(summand2 - summand1)
-    #print('----------------------')
-    #print('SUMME:', summe)
-    #print('----------------------')
-    return summe
+
+    return summe, termination
 
 def sudoku_test_unique(grid, solution_grid, tee_test):
     '''
@@ -209,17 +208,22 @@ def sudoku_test_unique(grid, solution_grid, tee_test):
     Given a specific solution, obj function is max(abs(x-solution))
     If maximum is not 0 the puzzles solution is not unique
     '''
+    def constraint_unique(model):
+        return sum((1-model.x[i, j, k] if solution_grid_binary[i][j][k]==1 else model.x[i,j,k] for i in range(9) for j in range(9) for k in range(9))) >= 1
 
 
 
+    solution_grid_binary = transform_grid_to_binary(solution_grid)
     model = start_model()
     model_new = define_constraints(model)
+    model.unique_constraint = Constraint(rule=constraint_unique)
 
     set_sudoku_parameters(model_new, grid)
 
-    solution_value = solve_model_unique(model_new, solution_grid, tee_test)
+    solution_value, termination = solve_model_unique(model_new, solution_grid, tee_test)
     test = transfrom_solution_back(model_new, tee_test)
-    return solution_value
+
+    return solution_value, termination
 
 if __name__ == '__main__':
     filled_grid = [[0, 5, 0, 9, 0, 0, 1, 6, 0],
@@ -232,6 +236,41 @@ if __name__ == '__main__':
                    [2, 0, 0, 3, 0, 0, 0, 1, 8],
                    [0, 0, 0, 1, 8, 0, 5, 0, 2]]
 
+    problematic_grid = [
+        [7,0,0,0,0,0,0,5,0],
+        [3,8,0,7,0,2,0,9,1],
+        [4,0,0,9,5,0,0,0,0],
+        [0,0,0,0,0,0,5,0,3],
+        [0,5,4,0,2,0,0,0,6],
+        [9,0,0,0,0,0,0,8,0],
+        [6,0,0,0,0,7,2,0,9],
+        [0,3,7,0,1,0,0,0,0],
+        [5,0,1,0,0,6,0,4,0]
+
+    ]
+    problematic_grid_solution = [
+        [7,1,9,3,4,8,6,5,2],
+        [3,8,5,7,6,2,4,9,1],
+        [4,6,2,9,5,1,7,3,8],
+        [1,7,6,8,9,4,5,2,3],
+        [8,5,4,1,2,3,9,7,6],
+        [9,2,3,6,7,5,1,8,4],
+        [6,4,8,5,3,7,2,1,9],
+        [2,3,7,4,1,9,8,6,5],
+        [5,9,1,2,8,6,3,4,7]
+    ]
+    solution_problematic = sudoku_test(problematic_grid, False)
+
+    solution_grid_problematic = [[0 for j in range(9)] for i in range(9)]
+    for i in range(9):
+        for j in range(9):
+            solution_grid_problematic[i][j] = solution_problematic[i][j]
+
+    problematic_value = sudoku_test_unique(problematic_grid, solution_problematic, True)
+    binary_problematic = transform_grid_to_binary(problematic_grid_solution)
+
+
+    '''
     model = start_model()
 
     model_new = define_constraints(model)
@@ -244,4 +283,5 @@ if __name__ == '__main__':
     empty_grid = [[0 for i in range(9)] for j in range(9)]
 
     solution_unique = sudoku_test_unique(empty_grid, solution, True)
+    '''
 
