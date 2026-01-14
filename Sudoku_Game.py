@@ -1,9 +1,21 @@
+import sys
+
+if not sys.stdout:
+    class Dummy:
+        def write(self, msg): pass
+        def flush(self): pass
+
+    sys.stdout = Dummy()
+    sys.stderr = Dummy()
+
 import pygame
 import pygame_widgets as pw
+from pyomo.environ import *
 import sys
 from pygame_widgets.button import Button
 from SudokuOpt import sudoku_test
 from SudokuGenerator import get_random_sudoku
+import multiprocessing
 
 '''
 SUDOKU GAME FROM "The-Assembly"
@@ -19,6 +31,8 @@ x   Solve with math optimization
 
 
 
+
+
 def DrawGrid():
     # Draw the lines
     for i in range(9):
@@ -30,20 +44,7 @@ def DrawGrid():
                 text = a_font.render(str(grid[i][j]), True, (0, 0, 0))
                 screen.blit(text, (i * inc + 18, j * inc + 10))
             elif len(guesses[i][j]) > 0:
-                '''
-                print(guesses[i][j])
-                for value in guesses[i][j]:
-
-                    text = b_font.render(str(value), True, (0, 0, 0))
-
-                    # position inside the cell (3x3 grid)
-                    row = (value - 1) // 3
-                    col = (value - 1) % 3
-
-                    pos_x = x * inc + 5 + col * (inc // 3)
-                    pos_y = y * inc + 5 + row * (inc // 3)
-                    screen.blit(text, (pos_x, pos_y))
-                    '''
+                pass
             else:
                 pygame.draw.rect(screen, (255,229,204), (i * inc, j * inc, inc + 1, inc + 1))
     # Draw lines horizontally and vertically to form grid
@@ -323,7 +324,40 @@ def GameThread():
         pygame.display.update()
 
 
+def main():
+
+    global width_screen, height_screen, screen, a_font, b_font
+    global inc, x, y, UserValue, GuessValue, grid, complete_grid
+    global IsRunning, IsSolving, guesses, guess_font
+
+    width_screen = 500
+    height_screen = 675
+    pygame.font.init()
+    screen = pygame.display.set_mode((width_screen, height_screen))  # Window size
+    screen.fill((255, 255, 255))
+    pygame.display.set_caption("SudokuApp")
+    a_font = pygame.font.SysFont("times", 30, "bold")  # Different fonts to be used
+    b_font = pygame.font.SysFont("times", 15, "bold")
+    inc = width_screen // 9  # Screen size // Number of boxes = each increment
+    x = 0
+    y = 0
+    UserValue = 0
+    GuessValue = 0
+    grid, complete_grid = get_random_sudoku(30)
+    IsRunning = True
+    IsSolving = False
+    guesses = [[set() for _ in range(9)] for _ in range(9)]
+    guess_font = pygame.font.SysFont(None, 20)
+
+    GameThread()  #
+
+
 if __name__ == '__main__':
+
+    multiprocessing.freeze_support()
+    main()
+
+    '''
     width_screen = 500
     height_screen = 675
     pygame.font.init()
@@ -344,3 +378,4 @@ if __name__ == '__main__':
     guess_font = pygame.font.SysFont(None, 20)
 
     GameThread()
+    '''

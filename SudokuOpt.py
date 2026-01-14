@@ -1,7 +1,8 @@
-from pyomo.core import ConcreteModel
-from pyscipopt import Model
+#from pyomo.core import ConcreteModel
+#from pyscipopt import Model
 from pyomo.environ import *
-
+import os
+import sys
 
 '''
 SOLVING SUDOKU and creating sudoku grid out of nothing
@@ -23,6 +24,13 @@ e.g. give a first digit somewhere random on the grid and then let the solver do 
 The solution to this puzzle will not be unique, but we dont care about that.
 
 '''
+
+def get_scip_executable():
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, 'solver', 'scip.exe')
 
 def start_model():
     index_for_variables = [(i, j, k) for i in range(9) for j in range(9) for k in range(9)]
@@ -100,8 +108,9 @@ def solve_model(model, tee_test):
 
     model.obj = Objective(rule=objective_rule, sense=minimize)
 
-    solver = SolverFactory('scip',
-                           executable='D:\\scipoptsuite-10.0.0-win-x64_ZIP\\scipoptsuite-10.0.0-win-x64\\bin\\scip')
+    #solver = SolverFactory('scip', executable='D:\\scipoptsuite-10.0.0-win-x64_ZIP\\scipoptsuite-10.0.0-win-x64\\bin\\scip')
+    scip_path = get_scip_executable()
+    solver = SolverFactory('scip', executable=scip_path)
     opt = solver.solve(model, tee=tee_test, logfile="TEST.txt")
     return opt
 
@@ -113,9 +122,11 @@ def transfrom_solution_back(model, tee_solution):
                 if round(model.x[row,col,number].value) == 1:
                     new_grid[row][col] = number+1
     if tee_solution:
+        '''
         print('SOLUTION IS: ')
         for i in range(9):
             print(new_grid[i])
+        '''
     return new_grid
 
 def sudoku_test(grid, tee_test):
