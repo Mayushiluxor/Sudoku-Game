@@ -114,7 +114,7 @@ def solve_model(model, tee_test):
     #solver = SolverFactory('scip', executable='D:\\scipoptsuite-10.0.0-win-x64_ZIP\\scipoptsuite-10.0.0-win-x64\\bin\\scip')
     scip_path = get_scip_executable()
     solver = SolverFactory('scip', executable=scip_path)
-    opt = solver.solve(model, tee=tee_test, logfile="TEST.txt")
+    opt = solver.solve(model, tee=tee_test)
     return opt
 
 def transfrom_solution_back(model, tee_solution):
@@ -182,7 +182,7 @@ def solve_model_unique(model, solution_grid, tee_test):
     solver = SolverFactory('scip',
                            executable='D:\\scipoptsuite-10.0.0-win-x64_ZIP\\scipoptsuite-10.0.0-win-x64\\bin\\scip')
     solver.options['limits/bestsol'] = 2
-    opt = solver.solve(model, tee=tee_test, logfile="TEST.txt")
+    opt = solver.solve(model, tee=tee_test)
 
 
     if (opt.solver.status == SolverStatus.ok) and (
