@@ -19,11 +19,12 @@ def GenerateSudoku(number_of_digits):
     random.shuffle(temp)
 
     grid = GenerateFilledGrid()
+
+    complete_grid_swapped = SwapDigitsRandom(grid)
     complete_grid = [[0 for i in range(9)] for j in range(9)]
     for i in range(9):
         for j in range(9):
-            complete_grid[i][j] = grid[i][j]
-    complete_grid_swapped = SwapDigitsRandom(grid)
+            complete_grid[i][j] = complete_grid_swapped[i][j]
 
     counter = 0
 
@@ -32,25 +33,25 @@ def GenerateSudoku(number_of_digits):
         random_column = temp[i] % 9
 
 
-        if grid[random_row][random_column] != 0:
-            number = grid[random_row][random_column]
+        if complete_grid_swapped[random_row][random_column] != 0:
+            number = complete_grid_swapped[random_row][random_column]
 
-            grid[random_row][random_column] = 0
-            solution, counter_solutions = SudokuGrid(grid)
+            complete_grid_swapped[random_row][random_column] = 0
+            solution, counter_solutions = SudokuGrid(complete_grid_swapped)
 
 
             if counter_solutions >1:
-                grid[random_row][random_column] = number
+                complete_grid_swapped[random_row][random_column] = number
             elif counter_solutions == 1:
                 counter += 1
                 if counter == (81 - number_of_digits):
                     break
-    return grid, complete_grid
+    return complete_grid_swapped, complete_grid
 
 def SwapDigitsRandom(grid):
     temp = list(range(9))
     random.shuffle(temp)
-    print(temp)
+
     swappedGrid = [[0 for i in range(9)] for j in range(9)]
 
     for i in range(9):
@@ -70,6 +71,5 @@ if __name__ == '__main__':
     grid, complete_grid = GenerateSudoku(number_given_digits)
 
     swappedGrid = SwapDigitsRandom(complete_grid)
-    print(swappedGrid)
-    print(complete_grid)
+
 
