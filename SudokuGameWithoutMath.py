@@ -17,13 +17,22 @@ from SudokuSolverWIthoutMath import *
 from SudokuGeneratorWithoutMath import *
 
 '''
+DONE
 HIGHLIGHT NUMBERS WHEN CLICKING ON COUNTING NUMBERS
+BLOCK AROUND HIGHLIGHT NUMBER AT COUNTING NUMBERS
+CLEAN UP "SETTINGS" NAMES
+SOLVE BUTTON COLOR FIX
 
 TODO:
 LINE 64 CLEAN UP NUMBER
-BLOCK AROUND HIGHLIGHT NUMBER AT COUNTING NUMBERS
 
-CLEAN UP "SETTINGS"
+CLEAN UP "SETTINGS" POSITION MAYBE?
+
+BATU VORSCHLAG 
+    - Fehlerbegrenzung 
+    - Falsche Lösungen zulassen / Ende Check obs passt
+
+
 '''
 
 def DrawGrid():
@@ -89,6 +98,9 @@ def DrawSelectedBox():
         return
     if int(y) == 9:
         Value = int(x)+1
+        for i in range(2):
+            pygame.draw.line(screen, (0, 0, 255), (x * inc, (y + i) * inc), (x * inc + inc, (y + i) * inc), 5)
+            pygame.draw.line(screen, (0, 0, 255), ((x + i) * inc, y * inc), ((x + i) * inc, y * inc + inc), 5)
     else:
         for i in range(2):
             pygame.draw.line(screen, (0, 0, 255), (x * inc, (y + i) * inc), (x * inc + inc, (y + i) * inc), 5)
@@ -160,8 +172,8 @@ def DrawCounter():
         Value = -1
     for i in range(9):
         if i == Value:
-            pygame.draw.rect(screen, (255, 255, 255), rect=(i * inc + 8, 510, 40, 40))
-            pygame.draw.rect(screen, (255, 255, 255), (i * inc + 8, 550, 40, 40))
+            pygame.draw.rect(screen, (255, 255, 255), rect=(i * inc-5, 499, 66, 66))
+            pygame.draw.rect(screen, (255, 255, 255), (i * inc-5, 550, 66, 66))
 
             if counter[i] != 9:
                 text_digit = TitleFont.render(str(i + 1), True, (0, 0, 200))
@@ -170,11 +182,11 @@ def DrawCounter():
                 text_digit = TitleFont.render(str(i + 1), True, (160,160,160))
                 text_counter = AttributeFont.render(str(counter[i]), True, (160,160,160))
 
-            screen.blit(text_digit, (i*inc + 18,510))
+            screen.blit(text_digit, (i*inc + 18,505))
             screen.blit(text_counter, (i * inc + 22, 550))
         else:
-            pygame.draw.rect(screen, (255, 255, 255), rect=(i * inc + 8, 510, 40, 40))
-            pygame.draw.rect(screen, (255, 255, 255), (i * inc + 8, 550, 40, 40))
+            pygame.draw.rect(screen, (255, 255, 255), rect=(i * inc - 5, 499, 66, 66))
+            pygame.draw.rect(screen, (255, 255, 255), (i * inc - 5, 550, 66, 66))
 
             if counter[i] != 9:
                 text_digit = TitleFont.render(str(i + 1), True, (0, 0, 0))
@@ -183,7 +195,7 @@ def DrawCounter():
                 text_digit = TitleFont.render(str(i + 1), True, (160, 160, 160))
                 text_counter = AttributeFont.render(str(counter[i]), True, (160, 160, 160))
 
-            screen.blit(text_digit, (i * inc + 18, 510))
+            screen.blit(text_digit, (i * inc + 18, 505))
             screen.blit(text_counter, (i * inc + 22, 550))
 
 
@@ -210,8 +222,8 @@ def DrawSolveButton():
     Button = pw.button.Button(
         screen, 350, 700, 120, 50, text='Solve',
         fontSize=20, margin=20,
-        inactiveColour=(0, 0, 255),
-        hoverColour=(0,0,0),
+        inactiveColour=(255, 204, 204),
+        hoverColour=(255,229,204),
         pressedColour=(0, 255, 0), radius=20,
         onClick=lambda: SolveSudoku(grid))
 
@@ -360,8 +372,8 @@ def HandleEvents():
     Button = pw.button.Button(
         screen, 350, 700, 120, 50, text='Solve',
         fontSize=20, margin=20,
-        inactiveColour=(0, 0, 255),
-        hoverColour=(255, 255, 255),
+        inactiveColour=(255, 204, 204),
+        hoverColour=(255,229,204),
         pressedColour=(0, 255, 0), radius=20,
         onClick=lambda: SolveSudoku(grid))
 
@@ -446,11 +458,12 @@ def GameThread():
     while IsRunning:
         HandleEvents()
         DrawGrid()
+        counter = CheckCounter()
+        DrawCounter()
         DrawSelectedBox()
         DrawUserValue()
         DrawGuesses()
-        counter = CheckCounter()
-        DrawCounter()
+
         Timer()
 
 
