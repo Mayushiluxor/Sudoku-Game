@@ -28,6 +28,8 @@ LINE 64 CLEAN UP NUMBER
 
 CLEAN UP "SETTINGS" POSITION MAYBE?
 
+CLEAN UP "MODES" GETTING CUT OFF
+
 BATU VORSCHLAG 
     - Fehlerbegrenzung 
     - Falsche Lösungen zulassen / Ende Check obs passt
@@ -173,7 +175,7 @@ def DrawCounter():
     for i in range(9):
         if i == Value:
             pygame.draw.rect(screen, (255, 255, 255), rect=(i * inc-5, 499, 66, 66))
-            pygame.draw.rect(screen, (255, 255, 255), (i * inc-5, 550, 66, 66))
+            pygame.draw.rect(screen, (255, 255, 255), (i * inc-5, 560, 400, 15))
 
             if counter[i] != 9:
                 text_digit = TitleFont.render(str(i + 1), True, (0, 0, 200))
@@ -183,10 +185,10 @@ def DrawCounter():
                 text_counter = AttributeFont.render(str(counter[i]), True, (160,160,160))
 
             screen.blit(text_digit, (i*inc + 18,505))
-            screen.blit(text_counter, (i * inc + 22, 550))
+            screen.blit(text_counter, (i * inc + 22, 555))
         else:
             pygame.draw.rect(screen, (255, 255, 255), rect=(i * inc - 5, 499, 66, 66))
-            pygame.draw.rect(screen, (255, 255, 255), (i * inc - 5, 550, 66, 66))
+            pygame.draw.rect(screen, (255, 255, 255), (i * inc - 5, 560, 66, 15))
 
             if counter[i] != 9:
                 text_digit = TitleFont.render(str(i + 1), True, (0, 0, 0))
@@ -196,7 +198,7 @@ def DrawCounter():
                 text_counter = AttributeFont.render(str(counter[i]), True, (160, 160, 160))
 
             screen.blit(text_digit, (i * inc + 18, 505))
-            screen.blit(text_counter, (i * inc + 22, 550))
+            screen.blit(text_counter, (i * inc + 22, 555))
 
 
 
