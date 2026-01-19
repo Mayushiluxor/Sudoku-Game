@@ -2,6 +2,7 @@ import pygame
 
 from SudokuSolverWIthoutMath import *
 import random
+import datetime
 
 def GenerateFilledGrid():
     random_first_row = [i + 1 for i in range(9)]
@@ -61,7 +62,19 @@ def SwapDigitsRandom(grid):
             swappedGrid[i][j] = new_digit+1
     return swappedGrid
 
+def GenerateDailySudoku():
+    current_day = datetime.datetime.today().day
+    current_month = datetime.datetime.today().month
+    current_year = datetime.datetime.today().year
 
+    random_seed = current_day + 40 * current_month + 1000 * current_year
+
+    random.seed(random_seed)
+    rand_int = random.randint(1, 12)
+    rand_amount_digits = 22 + rand_int
+
+    grid, complete_grid = GenerateSudoku(rand_amount_digits)
+    return grid, complete_grid
 
 
 if __name__ == '__main__':
@@ -71,5 +84,8 @@ if __name__ == '__main__':
     grid, complete_grid = GenerateSudoku(number_given_digits)
 
     swappedGrid = SwapDigitsRandom(complete_grid)
+
+    grid, complete_grid = GenerateDailySudoku()
+
 
 
