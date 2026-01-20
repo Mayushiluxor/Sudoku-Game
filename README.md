@@ -11,9 +11,9 @@ Can click on tiles or walk from tile to tile with arrow buttons
 Shift + Number to input a note, Number to input a number
 
 Settings:
-  Timer if turned on shows timer counting up
-  Faults if turned on wrong inputs will be counted - at 3 faults game will be lost and you have to start all over again
-  Pause if turned on pauses the game till it continues
+  - Timer if turned on shows timer counting up
+  - Faults if turned on wrong inputs will be counted - at 3 faults game will be lost and you have to start all over again
+  - Pause if turned on pauses the game till it continues
 
 Modes:
   - Daily Puzzle with a random difficulty
