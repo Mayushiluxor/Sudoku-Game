@@ -16,6 +16,5 @@ Settings:
   Pause if turned on pauses the game till it continues
 
 Modes:
-  Daily Puzzle with a random difficulty
-  Easy - Average- Hard
-    Create sudoku grid with 25/30/35 given digits
+  - Daily Puzzle with a random difficulty
+  - Easy - Average- Hard: Create sudoku grid with 25/30/35 given digits
