@@ -3,7 +3,7 @@ Sudoku Game for fun
   1. with a mathematical approach modelling sudoku as a mixed integer problem and solving it with scip
   2. with a recursive approach and backtracking
 
-To play, open either SudokuGame.py or SudokuGameWithoutMath.py
+To play, open either SudokuGame.py or SudokuGameWithoutMath.py with python or the Sudoku.exe
 Main focus on SudokuGameWithoutMath.py, less features in SudokuGame.py
 
 
