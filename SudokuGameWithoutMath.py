@@ -34,9 +34,10 @@ PAUSE BUTTON/KEYBIND
 CLEAN UP "SETTINGS" POSITION MAYBE?
 SETMOUSEPOSITION CLEAN UP NUMBER
 
+STOP TIMER WHEN DONE
+SHOW TIMER UNTIL NEW GAME IS STARTED
+
 TODO:
-
-
 
 
 
@@ -269,38 +270,25 @@ def DisplayMessage(Message, Interval, Color):
 
 
 def SetGridMode(Mode):
-    global grid, complete_grid, counter, original_grid, start_time, Fault_Counter
+    global grid, complete_grid, counter, original_grid, start_time, Fault_Counter, IsSolving
     screen.fill((255, 255, 255))
     DrawModes()
     DrawSolveButton()
-    if Mode == 0:  # For clearing the grid
+    if Mode == 0:
         grid, complete_grid = GenerateDailySudoku()
         original_grid = [[0 for i in range(9)] for j in range(9)]
         for i in range(9):
             for j in range(9):
                 original_grid[i][j] = grid[i][j]
-        '''
-                grid = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ]
-        '''
     elif Mode == 1:  # For easy mode
-        grid, complete_grid = GenerateSudoku(35)
+        grid, complete_grid = GenerateSudoku(40)
         original_grid = [[0 for i in range(9)] for j in range(9)]
         for i in range(9):
             for j in range(9):
                 original_grid[i][j] = grid[i][j]
 
     elif Mode == 2:  # For average mode
-        grid, complete_grid = GenerateSudoku(30)
+        grid, complete_grid = GenerateSudoku(32)
         original_grid = [[0 for i in range(9)] for j in range(9)]
         for i in range(9):
             for j in range(9):
@@ -315,6 +303,7 @@ def SetGridMode(Mode):
                 original_grid[i][j] = grid[i][j]
     start_time = pygame.time.get_ticks()
     Fault_Counter = 0
+    IsSolving = False
     pygame.init()
 
 def TimerChange():
@@ -361,7 +350,7 @@ def Pause():
 
 
 def HandleEvents():
-    global IsRunning, grid, complete_grid,  x, y, UserValue, GuessValue, counter, original_grid
+    global IsRunning, grid, complete_grid,  x, y, UserValue, GuessValue, counter, original_grid, IsSolving
     events = pygame.event.get()
     for event in events:
         # Quit the game window
@@ -444,6 +433,16 @@ def HandleEvents():
                     FaultChange()
                 if event.key == pygame.K_p:
                     PauseChange()
+            else:
+                if event.key == pygame.K_d:
+                    SetGridMode(0)
+                if event.key == pygame.K_e:
+                    SetGridMode(1)
+                if event.key == pygame.K_a:
+                    SetGridMode(2)
+                if event.key == pygame.K_h:
+                    SetGridMode(3)
+                IsSolving = False
 
     Button = pw.button.Button(
         screen, 350, 700, 120, 50, text='Solve',
@@ -459,7 +458,7 @@ def HandleEvents():
 
 
 def DrawUserValue():
-    global UserValue, IsSolving, grid, complete_grid, counter, original_grid, IsFault, Fault_Counter, start_time, paused_time
+    global UserValue, IsSolving, grid, complete_grid, counter, original_grid, IsFault, Fault_Counter, start_time, paused_time, IsPause
     if UserValue > 0:
         if IsUserValueValid(grid, complete_grid, x, y, UserValue):
             if grid[int(x)][int(y)] == 0:
@@ -468,8 +467,25 @@ def DrawUserValue():
                 DrawCounter()
                 UserValue = 0
                 if IsUserWin():
-                    IsSolving = False
+                    IsSolving = True
+                    current_time = pygame.time.get_ticks()
+                    elapsed_ms = current_time - start_time - paused_time
+                    elapsed_seconds = elapsed_ms // 1000
+
+                    minutes = elapsed_seconds // 60
+                    seconds = elapsed_seconds % 60
+                    time_string = f"{minutes:02}:{seconds:02}"
+
+                    font = pygame.font.SysFont(None, 30)
+                    time_surface = font.render(time_string, True, (0, 0, 0))
                     DisplayMessage("WON", 5000, (0, 255, 0))
+
+
+                    pygame.draw.rect(screen, (255, 255, 255), (375, 600, 100, 100))
+                    screen.blit(time_surface, (375, 630))
+
+
+
             else:
                 UserValue = 0
         else:
@@ -482,7 +498,6 @@ def DrawUserValue():
                     InsertGuess(GuessValue, x, y)
                     pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
                     for value in guesses[x][y]:
-                        # text = guess_font.render(str(GuessValue), True, (120, 120, 120))
                         text = b_font.render(str(value), True, (0, 0, 0))
 
                         # position inside the cell (3x3 grid)
@@ -527,24 +542,26 @@ def Faults():
 
 def Timer():
     global IsTimer
-    if not IsPause:
-        if IsTimer:
-            current_time = pygame.time.get_ticks()
-            elapsed_ms = current_time - start_time - paused_time
-            elapsed_seconds = elapsed_ms // 1000
+    if not IsSolving:
+        if not IsPause:
+            if IsTimer:
+                current_time = pygame.time.get_ticks()
+                elapsed_ms = current_time - start_time - paused_time
+                elapsed_seconds = elapsed_ms // 1000
 
-            minutes = elapsed_seconds // 60
-            seconds = elapsed_seconds % 60
-            time_string = f"{minutes:02}:{seconds:02}"
+                minutes = elapsed_seconds // 60
+                seconds = elapsed_seconds % 60
+                time_string = f"{minutes:02}:{seconds:02}"
 
-            font = pygame.font.SysFont(None, 30)
-            time_surface = font.render(time_string, True, (0, 0, 0))
+                font = pygame.font.SysFont(None, 30)
+                time_surface = font.render(time_string, True, (0, 0, 0))
 
-            pygame.draw.rect(screen, (255, 255, 255), (375,600,100,100))
-            screen.blit(time_surface, (375, 630))
-        else:
-            pygame.draw.rect(screen, (255, 255, 255), (375, 600, 100, 100))
-
+                pygame.draw.rect(screen, (255, 255, 255), (375,600,100,100))
+                screen.blit(time_surface, (375, 630))
+            else:
+                pygame.draw.rect(screen, (255, 255, 255), (375, 600, 100, 100))
+    else:
+        pass
 def InitializeComponent():
     global grid, complete_grid, counter, original_grid
     DrawGrid()
@@ -571,6 +588,7 @@ def GameThread():
         Faults()
         Pause()
 
+
         pygame.display.update()
 
 
@@ -588,7 +606,7 @@ def main():
 
     global width_screen, height_screen, screen, a_font, b_font, c_font, start_time
     global inc, x, y, UserValue, GuessValue, grid, complete_grid, counter, original_grid
-    global IsRunning, IsSolving, guesses, IsFault, IsTimer, IsPause, paused_time, pause_start, Fault_Counter
+    global IsRunning, IsSolving, guesses, IsFault, IsTimer, IsPause, paused_time, pause_start, Fault_Counter, end_time
 
     width_screen = 500
     height_screen = 775
@@ -621,6 +639,7 @@ def main():
     start_time = pygame.time.get_ticks()
     paused_time = 0
     pause_start = 0
+    end_time = 0
     pygame.init()
 
 
