@@ -67,8 +67,17 @@ def DrawGrid():
                 text = c_font.render(str(grid[i][j]), True, (0,0,0))
                 screen.blit(text, (i * inc + 18, j * inc + 10))
             elif len(guesses[i][j]) > 0:
+                pygame.draw.rect(screen, (255, 229, 204), (i * inc, j * inc, inc + 1, inc + 1))
+                for value in guesses[i][j]:
+                    text = b_font.render(str(value), True, (0, 0, 0))
 
-                pass
+                    # position inside the cell (3x3 grid)
+                    row = (value - 1) // 3
+                    col = (value - 1) % 3
+
+                    pos_x = i * inc + 5 + col * (inc // 3)
+                    pos_y = j * inc + 3 + row * (inc // 3)
+                    screen.blit(text, (pos_x, pos_y))
             else:
                 pygame.draw.rect(screen, (255,229,204), (i * inc, j * inc, inc + 1, inc + 1))
     # Draw lines horizontally and vertically to form grid
@@ -336,7 +345,6 @@ def PauseChange():
 def Pause():
     '''
     While being paused an empty grid is being drawn on the screen.
-    TODO Pause Timer aswell
     '''
     if IsPause:
         for i in range(9):
@@ -349,7 +357,7 @@ def Pause():
             width = 3
         pygame.draw.line(screen, (0, 0, 0), (i * inc, 0), (i * inc, width_screen-4), width)  # vertical
         pygame.draw.line(screen, (0, 0, 0), (0, i * inc), (width_screen-4, i * inc), width)  # horizontal
-    paused_time = pygame.time.get_ticks()
+
 
 
 def HandleEvents():
@@ -451,7 +459,7 @@ def HandleEvents():
 
 
 def DrawUserValue():
-    global UserValue, IsSolving, grid, complete_grid, counter, original_grid, IsFault, Fault_Counter, start_time
+    global UserValue, IsSolving, grid, complete_grid, counter, original_grid, IsFault, Fault_Counter, start_time, paused_time
     if UserValue > 0:
         if IsUserValueValid(grid, complete_grid, x, y, UserValue):
             if grid[int(x)][int(y)] == 0:
@@ -494,6 +502,7 @@ def DrawUserValue():
                                 grid[i][j] = original_grid[i][j]
                         start_time = pygame.time.get_ticks()
                         Fault_Counter = 0
+                        paused_time = 0
                         pygame.init()
 
 
