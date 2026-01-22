@@ -14,7 +14,7 @@ import sys
 import time
 from pygame_widgets.button import Button
 from SudokuSolverWIthoutMath import *
-from SudokuGeneratorWithoutMath import *
+#from SudokuGeneratorWithoutMath import *
 
 '''
 ORIGINAL CODE FROM https://github.com/The-Assembly/Code-an-AI-Sudoku-Solver-in-Python
@@ -37,14 +37,12 @@ SETMOUSEPOSITION CLEAN UP NUMBER
 STOP TIMER WHEN DONE
 SHOW TIMER UNTIL NEW GAME IS STARTED
 
+FIXED BUG ON FAULT
 TODO:
 
-
-
-
-
-
 - Falsche Lösungen zulassen / Ende Check obs passt Maybe?
+
+HINT / GET SINGLE NUMBER INSTEAD OF SOLVE BUTTON
 
 
 
@@ -97,6 +95,8 @@ def SolveSudoku(gridArray):
     for i in range(9):
         for j in range(9):
             gridArray[i][j] = grid[i][j]
+
+
 
 
 def SetMousePosition(p):
@@ -237,8 +237,40 @@ def DrawModes():
     screen.blit(TitleFont.render("Settings", True, (0, 0, 0)), (160, 605))
     screen.blit(AttributeFont.render("T: Timer on/off", True, (0, 0, 0)), (175, 630))
     screen.blit(AttributeFont.render("F: Faults on/off", True, (0, 0, 0)), (175, 655))
-    screen.blit(AttributeFont.render("P: Pause", True, (0, 0, 0)), (175, 680))
+    screen.blit(AttributeFont.render("Hints used", True, (0, 0, 0)), (175, 680))
+    screen.blit(AttributeFont.render("P: Pause", True, (0, 0, 0)), (175, 705))
 
+def CheckAndDraw():
+    global grid, complete_grid, counter, original_grid, hint_counter
+    solved, row_sol, col_sol, digit, which, pointed = CheckOneSlot(grid)
+    if solved:
+        hint_counter += 1
+        Hints()
+        pygame.draw.rect(screen, (0, 255, 0), (row_sol * inc, col_sol * inc, inc + 1, inc + 1))
+        message = which +' '+ str(digit)
+        DisplayMessage(message, 2000, (0, 0, 0))
+        DrawGrid()
+        DrawCounter()
+        Timer()
+        pygame.display.update()
+        time.sleep(1)
+        pygame.draw.rect(screen, (255, 229, 204), (row_sol * inc, col_sol * inc, inc + 1, inc + 1))
+        if len(guesses[row_sol][col_sol]) > 0:
+            pygame.draw.rect(screen, (255, 229, 204), (row_sol * inc, col_sol * inc, inc + 1, inc + 1))
+            for value in guesses[row_sol][col_sol]:
+                text = b_font.render(str(value), True, (0, 0, 0))
+
+                # position inside the cell (3x3 grid)
+                row = (value - 1) // 3
+                col = (value - 1) % 3
+
+                pos_x = row_sol * inc + 5 + col * (inc // 3)
+                pos_y = col_sol * inc + 5 + row * (inc // 3)
+                screen.blit(text, (pos_x, pos_y))
+
+    else:
+        message = "No easy solution"
+        DisplayMessage(which, 2000, (0,0,0))
 
 
 
@@ -248,12 +280,12 @@ def DrawSolveButton():
     global grid, complete_grid, counter, original_grid
     events = pygame.event.get()
     Button = pw.button.Button(
-        screen, 350, 700, 120, 50, text='Solve',
+        screen, 350, 755, 120, 50, text='Hint',
         fontSize=20, margin=20,
         inactiveColour=(255, 204, 204),
         hoverColour=(255,229,204),
         pressedColour=(0, 255, 0), radius=20,
-        onClick=lambda: SolveSudoku(grid))
+        onClick=lambda: CheckAndDraw())
 
     Button.draw()
     pw.update(events)
@@ -261,7 +293,7 @@ def DrawSolveButton():
 
 def DisplayMessage(Message, Interval, Color):
     global grid, complete_grid, counter, original_grid
-    screen.blit(a_font.render(Message, True, Color), (175, 710))
+    screen.blit(a_font.render(Message, True, Color), (175, 740))
     pygame.display.update()
     pygame.time.delay(Interval)
     screen.fill((255, 255, 255))
@@ -445,12 +477,12 @@ def HandleEvents():
                 IsSolving = False
 
     Button = pw.button.Button(
-        screen, 350, 700, 120, 50, text='Solve',
+        screen, 350, 755, 120, 50, text='Hint',
         fontSize=20, margin=20,
         inactiveColour=(255, 204, 204),
         hoverColour=(255,229,204),
         pressedColour=(0, 255, 0), radius=20,
-        onClick=lambda: SolveSudoku(grid))
+        onClick=lambda: CheckAndDraw())
 
     Button.draw()
     pw.update(events)
@@ -495,7 +527,6 @@ def DrawUserValue():
                 time.sleep(1)
                 pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
                 if len(guesses[x][y]) > 0:
-                    InsertGuess(GuessValue, x, y)
                     pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
                     for value in guesses[x][y]:
                         text = b_font.render(str(value), True, (0, 0, 0))
@@ -539,6 +570,15 @@ def Faults():
 
         pygame.draw.rect(screen, (255,255,255), (375, 655, 70, 25))
         screen.blit(time_surface, (375, 655))
+
+def Hints():
+    global hint_counter
+    pygame.draw.rect(screen, (255, 255, 255), (375, 680, 70, 25))
+
+    font = pygame.font.SysFont(None, 30)
+    hint_text = str(hint_counter)
+    hint_surface = font.render(hint_text, True, (0, 0, 0))
+    screen.blit(hint_surface, (375, 680))
 
 def Timer():
     global IsTimer
@@ -586,6 +626,7 @@ def GameThread():
 
         Timer()
         Faults()
+        Hints()
         Pause()
 
 
@@ -605,11 +646,11 @@ def CheckCounter():
 def main():
 
     global width_screen, height_screen, screen, a_font, b_font, c_font, start_time
-    global inc, x, y, UserValue, GuessValue, grid, complete_grid, counter, original_grid
+    global inc, x, y, UserValue, GuessValue, grid, complete_grid, counter, original_grid, hint_counter
     global IsRunning, IsSolving, guesses, IsFault, IsTimer, IsPause, paused_time, pause_start, Fault_Counter, end_time
 
     width_screen = 500
-    height_screen = 775
+    height_screen = 850
     pygame.font.init()
     screen = pygame.display.set_mode((width_screen, height_screen))  # Window size
     screen.fill((255, 255, 255))
@@ -640,6 +681,8 @@ def main():
     paused_time = 0
     pause_start = 0
     end_time = 0
+
+    hint_counter = 0
     pygame.init()
 
 

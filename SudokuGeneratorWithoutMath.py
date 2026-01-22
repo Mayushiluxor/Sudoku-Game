@@ -87,5 +87,7 @@ if __name__ == '__main__':
 
     grid, complete_grid = GenerateDailySudoku()
 
+    GenerateFilledGrid()
+
 
 
