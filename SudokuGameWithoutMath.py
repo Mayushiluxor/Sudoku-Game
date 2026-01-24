@@ -38,15 +38,30 @@ STOP TIMER WHEN DONE
 SHOW TIMER UNTIL NEW GAME IS STARTED
 
 FIXED BUG ON FAULT
-TODO:
-
-- Falsche Lösungen zulassen / Ende Check obs passt Maybe?
 
 HINT / GET SINGLE NUMBER INSTEAD OF SOLVE BUTTON
 
+ONLY GIVE GRIDS THAT ARE SOLVABLE FROM HINTS?
+TODO:
+
+Fixed crash on try insert number on counter number position
+
+HIGHLIGHT HINT CHANGE MAYBE?
 
 
 '''
+'''
+UNSURE IF WE STILL NEED IT
+IN CASE SOMETHING BREAKS, HERE IT IS
+def SolveSudoku(gridArray):
+    global complete_grid, counter, original_grid
+    grid, solution_counter = SudokuGrid(gridArray)
+    for i in range(9):
+        for j in range(9):
+            gridArray[i][j] = grid[i][j]
+'''
+
+
 
 def DrawGrid():
     global grid, complete_grid, counter, original_grid
@@ -89,13 +104,6 @@ def DrawGrid():
         pygame.draw.line(screen, (0, 0, 0), (0, i * inc), (width_screen-4, i * inc), width)  # horizontal
 
 
-def SolveSudoku(gridArray):
-    global complete_grid, counter, original_grid
-    grid, solution_counter = SudokuGrid(gridArray)
-    for i in range(9):
-        for j in range(9):
-            gridArray[i][j] = grid[i][j]
-
 
 
 
@@ -113,6 +121,7 @@ def IsUserValueValid(grid, complete_grid, row,col, value):
         return True
     else:
         return False
+
 
 
 # highlighting the selected cell
@@ -138,6 +147,20 @@ def DrawSelectedBox():
                     pygame.draw.rect(screen, (255, 204, 204), (i * inc+5, j * inc+5, inc + 1-10, inc + 1-10))
                     text = a_font.render(str(grid[i][j]), True, (0, 0, 200))
                     screen.blit(text, (i * inc + 18, j * inc + 10))
+            if grid[i][j] == 0:
+                for note in guesses[i][j]:
+                    if note == Value:
+                        text = b_font.render(str(note), True, (0, 0, 255))
+                    else:
+                        text = b_font.render(str(note), True, (0, 0, 0))
+
+                    # position inside the cell (3x3 grid)
+                    row = (note - 1) // 3
+                    col = (note - 1) % 3
+
+                    pos_x = i * inc + 5 + col * (inc // 3)
+                    pos_y = j * inc + 3 + row * (inc // 3)
+                    screen.blit(text, (pos_x, pos_y))
 
 
 # insert value entered by user
@@ -240,15 +263,20 @@ def DrawModes():
     screen.blit(AttributeFont.render("Hints used", True, (0, 0, 0)), (175, 680))
     screen.blit(AttributeFont.render("P: Pause", True, (0, 0, 0)), (175, 705))
 
+    screen.blit(AttributeFont.render("S: Hints Solved/Unsolved", True, (0, 0, 0)), (175, 730))
+
 def CheckAndDraw():
-    global grid, complete_grid, counter, original_grid, hint_counter
-    solved, row_sol, col_sol, digit, which, pointed = CheckOneSlot(grid)
+    global grid, complete_grid, counter, original_grid, hint_counter, IsHints
+    solved, row_sol, col_sol, digit, which = CheckOneSlot(grid)
     if solved:
         hint_counter += 1
         Hints()
         pygame.draw.rect(screen, (0, 255, 0), (row_sol * inc, col_sol * inc, inc + 1, inc + 1))
-        message = which +' '+ str(digit)
-        DisplayMessage(message, 2000, (0, 0, 0))
+        if IsHints:
+            message = which +' '+ str(digit)
+        else:
+            message = which
+        DisplayMessage(message, 1000, (0, 0, 0))
         DrawGrid()
         DrawCounter()
         Timer()
@@ -270,7 +298,7 @@ def CheckAndDraw():
 
     else:
         message = "No easy solution"
-        DisplayMessage(which, 2000, (0,0,0))
+        DisplayMessage(message, 2000, (0,0,0))
 
 
 
@@ -280,7 +308,7 @@ def DrawSolveButton():
     global grid, complete_grid, counter, original_grid
     events = pygame.event.get()
     Button = pw.button.Button(
-        screen, 350, 755, 120, 50, text='Hint',
+        screen, 350, 775, 120, 50, text='Hint',
         fontSize=20, margin=20,
         inactiveColour=(255, 204, 204),
         hoverColour=(255,229,204),
@@ -293,7 +321,7 @@ def DrawSolveButton():
 
 def DisplayMessage(Message, Interval, Color):
     global grid, complete_grid, counter, original_grid
-    screen.blit(a_font.render(Message, True, Color), (175, 740))
+    screen.blit(a_font.render(Message, True, Color), (70, 765))
     pygame.display.update()
     pygame.time.delay(Interval)
     screen.fill((255, 255, 255))
@@ -346,6 +374,12 @@ def TimerChange():
     else:
         IsTimer = True
 
+def HintsChange():
+    global IsHints
+    if IsHints == True:
+        IsHints = False
+    else:
+        IsHints = True
 
 def FaultChange():
     global IsFault
@@ -465,6 +499,8 @@ def HandleEvents():
                     FaultChange()
                 if event.key == pygame.K_p:
                     PauseChange()
+                if event.key == pygame.K_s:
+                    HintsChange()
             else:
                 if event.key == pygame.K_d:
                     SetGridMode(0)
@@ -477,7 +513,7 @@ def HandleEvents():
                 IsSolving = False
 
     Button = pw.button.Button(
-        screen, 350, 755, 120, 50, text='Hint',
+        screen, 350, 775, 120, 50, text='Hint',
         fontSize=20, margin=20,
         inactiveColour=(255, 204, 204),
         hoverColour=(255,229,204),
@@ -491,75 +527,76 @@ def HandleEvents():
 
 def DrawUserValue():
     global UserValue, IsSolving, grid, complete_grid, counter, original_grid, IsFault, Fault_Counter, start_time, paused_time, IsPause
-    if UserValue > 0:
-        if IsUserValueValid(grid, complete_grid, x, y, UserValue):
-            if grid[int(x)][int(y)] == 0:
-                InsertValue(UserValue)
-                DrawGrid()
-                DrawCounter()
-                UserValue = 0
-                if IsUserWin():
-                    IsSolving = True
-                    current_time = pygame.time.get_ticks()
-                    elapsed_ms = current_time - start_time - paused_time
-                    elapsed_seconds = elapsed_ms // 1000
+    if int(x) <= 8 and int(y) <= 8 and int(x) >= 0 and int(y) >= 0:
+        if UserValue > 0:
+            if IsUserValueValid(grid, complete_grid, x, y, UserValue):
+                if grid[int(x)][int(y)] == 0:
+                    InsertValue(UserValue)
+                    DrawGrid()
+                    DrawCounter()
+                    UserValue = 0
+                    if IsUserWin():
+                        IsSolving = True
+                        current_time = pygame.time.get_ticks()
+                        elapsed_ms = current_time - start_time - paused_time
+                        elapsed_seconds = elapsed_ms // 1000
 
-                    minutes = elapsed_seconds // 60
-                    seconds = elapsed_seconds % 60
-                    time_string = f"{minutes:02}:{seconds:02}"
+                        minutes = elapsed_seconds // 60
+                        seconds = elapsed_seconds % 60
+                        time_string = f"{minutes:02}:{seconds:02}"
 
-                    font = pygame.font.SysFont(None, 30)
-                    time_surface = font.render(time_string, True, (0, 0, 0))
-                    DisplayMessage("WON", 5000, (0, 255, 0))
-
-
-                    pygame.draw.rect(screen, (255, 255, 255), (375, 600, 100, 100))
-                    screen.blit(time_surface, (375, 630))
+                        font = pygame.font.SysFont(None, 30)
+                        time_surface = font.render(time_string, True, (0, 0, 0))
+                        DisplayMessage("WON", 5000, (0, 255, 0))
 
 
+                        pygame.draw.rect(screen, (255, 255, 255), (375, 600, 100, 100))
+                        screen.blit(time_surface, (375, 630))
 
+
+
+                else:
+                    UserValue = 0
             else:
-                UserValue = 0
-        else:
-            if grid[int(x)][int(y)] == 0:
-                pygame.draw.rect(screen, (255, 0, 0), (x * inc, y * inc, inc + 1, inc + 1))
-                pygame.display.update()
-                time.sleep(1)
-                pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
-                if len(guesses[x][y]) > 0:
+                if grid[int(x)][int(y)] == 0:
+                    pygame.draw.rect(screen, (255, 0, 0), (x * inc, y * inc, inc + 1, inc + 1))
+                    pygame.display.update()
+                    time.sleep(1)
                     pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
-                    for value in guesses[x][y]:
-                        text = b_font.render(str(value), True, (0, 0, 0))
+                    if len(guesses[x][y]) > 0:
+                        pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
+                        for value in guesses[x][y]:
+                            text = b_font.render(str(value), True, (0, 0, 0))
 
-                        # position inside the cell (3x3 grid)
-                        row = (value - 1) // 3
-                        col = (value - 1) % 3
+                            # position inside the cell (3x3 grid)
+                            row = (value - 1) // 3
+                            col = (value - 1) % 3
 
-                        pos_x = x * inc + 5 + col * (inc // 3)
-                        pos_y = y * inc + 5 + row * (inc // 3)
-                        screen.blit(text, (pos_x, pos_y))
-                if IsFault:
-                    Fault_Counter +=1
-                    if Fault_Counter >= 3:
-                        DisplayMessage("LOST", 2000, (255, 0, 0))
-                        grid = [[0 for i in range(9)] for j in range(9)]
-                        for i in range(9):
-                            for j in range(9):
-                                grid[i][j] = original_grid[i][j]
-                        start_time = pygame.time.get_ticks()
-                        Fault_Counter = 0
-                        paused_time = 0
-                        pygame.init()
+                            pos_x = x * inc + 5 + col * (inc // 3)
+                            pos_y = y * inc + 5 + row * (inc // 3)
+                            screen.blit(text, (pos_x, pos_y))
+                    if IsFault:
+                        Fault_Counter +=1
+                        if Fault_Counter >= 3:
+                            DisplayMessage("LOST", 2000, (255, 0, 0))
+                            grid = [[0 for i in range(9)] for j in range(9)]
+                            for i in range(9):
+                                for j in range(9):
+                                    grid[i][j] = original_grid[i][j]
+                            start_time = pygame.time.get_ticks()
+                            Fault_Counter = 0
+                            paused_time = 0
+                            pygame.init()
 
 
 
-                #DisplayMessage("Incorrect Value", 500, (255, 0, 0))
-            for i in range(9):
-                text = a_font.render(str(i + 1), True, (0, 0, 0))
-                screen.blit(text, (i * inc + 18, 510))
-                text = b_font.render(str(counter[i]), True, (0, 0, 0))
-                screen.blit(text, (i * inc + 18, 550))
-            UserValue = 0
+                    #DisplayMessage("Incorrect Value", 500, (255, 0, 0))
+                for i in range(9):
+                    text = a_font.render(str(i + 1), True, (0, 0, 0))
+                    screen.blit(text, (i * inc + 18, 510))
+                    text = b_font.render(str(counter[i]), True, (0, 0, 0))
+                    screen.blit(text, (i * inc + 18, 550))
+                UserValue = 0
 
 def Faults():
     global Fault_Counter, IsFault
@@ -647,7 +684,7 @@ def main():
 
     global width_screen, height_screen, screen, a_font, b_font, c_font, start_time
     global inc, x, y, UserValue, GuessValue, grid, complete_grid, counter, original_grid, hint_counter
-    global IsRunning, IsSolving, guesses, IsFault, IsTimer, IsPause, paused_time, pause_start, Fault_Counter, end_time
+    global IsRunning, IsSolving, guesses, IsFault, IsTimer, IsPause, IsHints, paused_time, pause_start, Fault_Counter, end_time
 
     width_screen = 500
     height_screen = 850
@@ -675,6 +712,7 @@ def main():
     IsFault = False
     IsTimer = True
     IsPause = False
+    IsHints = False
     Fault_Counter = 0
 
     start_time = pygame.time.get_ticks()
