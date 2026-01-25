@@ -42,6 +42,9 @@ FIXED BUG ON FAULT
 HINT / GET SINGLE NUMBER INSTEAD OF SOLVE BUTTON
 
 ONLY GIVE GRIDS THAT ARE SOLVABLE FROM HINTS?
+
+IN A WAY PROBLEM WITH SOLVER -> WHILE CHANGE MEANS EVEN IF HE WOULD FIND SOLUTIONS, HE FIRST ELIMINATES AND WITH THAT ELIMINATES
+FIXED THAT 
 TODO:
 
 Fixed crash on try insert number on counter number position
@@ -49,17 +52,10 @@ Fixed crash on try insert number on counter number position
 HIGHLIGHT HINT CHANGE MAYBE?
 
 
+
+
 '''
-'''
-UNSURE IF WE STILL NEED IT
-IN CASE SOMETHING BREAKS, HERE IT IS
-def SolveSudoku(gridArray):
-    global complete_grid, counter, original_grid
-    grid, solution_counter = SudokuGrid(gridArray)
-    for i in range(9):
-        for j in range(9):
-            gridArray[i][j] = grid[i][j]
-'''
+
 
 
 

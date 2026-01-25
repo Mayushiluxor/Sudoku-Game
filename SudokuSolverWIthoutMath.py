@@ -15,6 +15,9 @@ naked pair -> check for all spots that only 2 digits can be -> check for pairs
 Now need hidden pair & naked pair 
 hidden pair -> check for all digits that can be in exactly 2 spots -> check for pairs
 hidden pair -> any possiblity if there are 3 pairs? check theory
+
+check if pointed works intended now
+
 '''
 
 def EasySolve(grid):
@@ -237,6 +240,8 @@ def Pointed(possible_set_grid):
         for box in range(9):
             counter_row = [0,0,0]
             counter_column = [0,0,0]
+            actual_counter_row = [0,0,0]
+            actual_counter_column = [0,0,0]
             start_row = 3 * (box % 3)
             start_column = 3 * (box // 3)
             for i in range(3):
@@ -244,9 +249,11 @@ def Pointed(possible_set_grid):
                     if digit in possible_set_grid[start_row+i][start_column+j]:
                         counter_row[i] =1
                         counter_column[j] =1
+                        actual_counter_row[i] +=1
+                        actual_counter_column[j] +=1
 
 
-            if sum(counter_row) ==1:
+            if sum(counter_row) ==1 and sum(actual_counter_row) >=2:
                 add_row = counter_row.index(1)
                 row = start_row + add_row
                 columns = [start_column+i for i in range(3)]
@@ -257,7 +264,7 @@ def Pointed(possible_set_grid):
                             possible_set_grid[row][i].remove(digit)
 
 
-            if sum(counter_column) ==1:
+            if sum(counter_column) ==1 and sum(actual_counter_column) >=2:
                 add_column = counter_column.index(1)
                 column = start_column + add_column
                 rows = [start_row+i for i in range(3)]
@@ -590,11 +597,10 @@ def GenerateSudoku(number_of_digits):
                     break
     solution_intuitive = EasySolvePointedAndPair(complete_grid_swapped)
     if solution_intuitive == complete_grid:
-        #print('EASY SUDOKU')
-        #print('-----------')
+
         return complete_grid_swapped, complete_grid
     else:
-        #print('TOUGH SUDOKU')
+
         return GenerateSudoku(number_of_digits)
 
 def SwapDigitsRandom(grid):
@@ -618,11 +624,13 @@ def GenerateDailySudoku():
     random_seed = current_day + 40 * current_month + 1000 * current_year
 
     random.seed(random_seed)
-    rand_int = random.randint(1, 12)
-    rand_amount_digits = 22 + rand_int
+    rand_int = random.randint(1, 14)
+    rand_amount_digits = 24 + rand_int
 
     grid, complete_grid = GenerateSudoku(rand_amount_digits)
     return grid, complete_grid
+
+
 
 '''
 ------------------------------------------------------------------------------------------------------------------------
@@ -702,7 +710,7 @@ if __name__ == '__main__':
     hidden_pair(example_set)
     for i in range(9):
         print(example_set[i])
-    '''
+    
     random.seed(20)
     counter_solved_easy = 0
     counter_solved_pointed = 0
@@ -727,7 +735,6 @@ if __name__ == '__main__':
     print('EASY SOLVE', counter_solved_easy)
     print('POINTED SOLVE', counter_solved_pointed)
     print('POINTED AND PAIR SOLVE', counter_solved_pointed_pair)
-
-
+    '''
 
 
