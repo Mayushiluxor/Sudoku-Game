@@ -183,23 +183,26 @@ def InsertGuess(value, x, y):
 def DrawGuesses():
     global GuessValue, grid, complete_grid, counter, original_grid
     if GuessValue > 0:
-        if grid[int(x)][int(y)] == 0:
-            InsertGuess(GuessValue, x, y)
-            pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
-            for value in guesses[x][y]:
+        if int(x) <= 8 and int(y) <= 8 and int(x) >= 0 and int(y) >= 0:
+            if grid[int(x)][int(y)] == 0:
+                InsertGuess(GuessValue, x, y)
+                pygame.draw.rect(screen, (255, 229, 204), (x * inc, y * inc, inc + 1, inc + 1))
+                for value in guesses[x][y]:
 
-                text = b_font.render(str(value), True, (0, 0, 0))
+                    text = b_font.render(str(value), True, (0, 0, 0))
 
 
-                # position inside the cell (3x3 grid)
-                row = (value - 1) // 3
-                col = (value - 1) % 3
+                    # position inside the cell (3x3 grid)
+                    row = (value - 1) // 3
+                    col = (value - 1) % 3
 
-                pos_x = x * inc + 5 + col * (inc // 3)
-                pos_y = y * inc + 3 + row * (inc // 3)
-                screen.blit(text, (pos_x, pos_y))
-                GuessValue = 0
-        GuessValue = 0
+                    pos_x = x * inc + 5 + col * (inc // 3)
+                    pos_y = y * inc + 3 + row * (inc // 3)
+                    screen.blit(text, (pos_x, pos_y))
+                    GuessValue = 0
+            GuessValue = 0
+        else:
+            GuessValue = 0
 
 def IsUserWin():
     global grid, complete_grid, counter, original_grid
