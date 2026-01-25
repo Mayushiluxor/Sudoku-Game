@@ -3,7 +3,7 @@ Sudoku Game for fun
   1. with a mathematical approach modelling sudoku as a mixed integer problem and solving it with scip
   2. with a recursive approach and backtracking
 
-To play, open either SudokuGame.py or SudokuGameWithoutMath.py with python or the Sudoku.exe
+To play, open either SudokuGame.py or SudokuGameWithoutMath.py with python or unzip the zip data and open the exe in there.
 Main focus on SudokuGameWithoutMath.py, less features in SudokuGame.py
 
 
@@ -14,7 +14,8 @@ Settings:
   - Timer if turned on shows timer counting up
   - Faults if turned on wrong inputs will be counted - at 3 faults game will be lost and you have to start all over again
   - Pause if turned on pauses the game till it continues
+  - Options for hints: Solved (give a spot in the grid and a number) or unsolved (only give the spot, not the number)
 
 Modes:
   - Daily Puzzle with a random difficulty
-  - Easy - Average- Hard: Create sudoku grid with 25/30/35 given digits
+  - Easy - Average- Hard: Create sudoku grid with 25/32/40 given digits
