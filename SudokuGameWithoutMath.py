@@ -17,8 +17,8 @@ from SudokuSolverWIthoutMath import *
 #from SudokuGeneratorWithoutMath import *
 
 '''
-ORIGINAL CODE FROM https://github.com/The-Assembly/Code-an-AI-Sudoku-Solver-in-Python
-MOST THINGS DID NOT WORK, BUT GAME STRUCTURE IS FROM THERE
+ORIGINAL GAME STRUCTURE FROM https://github.com/The-Assembly/Code-an-AI-Sudoku-Solver-in-Python
+
 
 DONE
 HIGHLIGHT NUMBERS WHEN CLICKING ON COUNTING NUMBERS
@@ -45,11 +45,15 @@ ONLY GIVE GRIDS THAT ARE SOLVABLE FROM HINTS?
 
 IN A WAY PROBLEM WITH SOLVER -> WHILE CHANGE MEANS EVEN IF HE WOULD FIND SOLUTIONS, HE FIRST ELIMINATES AND WITH THAT ELIMINATES
 FIXED THAT 
-TODO:
 
 Fixed crash on try insert number on counter number position
+FIX PAUSE TIMER GETTING RESET ON NEW GAME?
 
 HIGHLIGHT HINT CHANGE MAYBE?
+TODO:
+
+
+
 
 
 
@@ -244,10 +248,28 @@ def DrawCounter():
             screen.blit(text_digit, (i * inc + 18, 505))
             screen.blit(text_counter, (i * inc + 22, 555))
 
+def DrawHints():
+    global grid, complete_grid, original_grid, IsHints
+    AttributeFont = pygame.font.SysFont("times", 20)
+    TitleFont = pygame.font.SysFont("times", 20, "bold")
+
+    pygame.draw.rect(screen, (255,255,255), rect = (370, 705, 80, 20))
+    if IsHints:
+        screen.blit(AttributeFont.render("Solved", True, (0, 0, 0)), (370, 705))
+    else:
+        screen.blit(AttributeFont.render("Unsolved", True, (0, 0, 0)), (370, 705))
+
+def DrawPause():
+    global IsPause
+    AttributeFont = pygame.font.SysFont("times", 20)
+    TitleFont = pygame.font.SysFont("times", 20, "bold")
+    pygame.draw.rect(screen, (255, 255, 255), rect=(370, 730, 80, 20))
+    if IsPause:
+        screen.blit(AttributeFont.render("Paused", True, (0, 0, 0)), (370, 730))
 
 
 def DrawModes():
-    global grid, complete_grid, counter, original_grid
+    global grid, complete_grid, counter, original_grid, IsHints
     TitleFont = pygame.font.SysFont("times", 20, "bold")
     AttributeFont = pygame.font.SysFont("times", 20)
 
@@ -260,9 +282,10 @@ def DrawModes():
     screen.blit(AttributeFont.render("T: Timer on/off", True, (0, 0, 0)), (175, 630))
     screen.blit(AttributeFont.render("F: Faults on/off", True, (0, 0, 0)), (175, 655))
     screen.blit(AttributeFont.render("Hints used", True, (0, 0, 0)), (175, 680))
-    screen.blit(AttributeFont.render("P: Pause", True, (0, 0, 0)), (175, 705))
 
-    screen.blit(AttributeFont.render("S: Hints Solved/Unsolved", True, (0, 0, 0)), (175, 730))
+
+    screen.blit(AttributeFont.render("S: Hints", True, (0, 0, 0)), (175, 705))
+    screen.blit(AttributeFont.render("P: Pause", True, (0, 0, 0)), (175, 730))
 
 def CheckAndDraw():
     global grid, complete_grid, counter, original_grid, hint_counter, IsHints
@@ -329,40 +352,37 @@ def DisplayMessage(Message, Interval, Color):
 
 
 def SetGridMode(Mode):
-    global grid, complete_grid, counter, original_grid, start_time, Fault_Counter, IsSolving
+    global grid, complete_grid, counter, original_grid, start_time, Fault_Counter, IsSolving, hint_counter
+    global guesses, IsFault, IsTimer, IsPause, IsHints, paused_time, pause_start, end_time
     screen.fill((255, 255, 255))
     DrawModes()
     DrawSolveButton()
     if Mode == 0:
         grid, complete_grid = GenerateDailySudoku()
-        original_grid = [[0 for i in range(9)] for j in range(9)]
-        for i in range(9):
-            for j in range(9):
-                original_grid[i][j] = grid[i][j]
+
     elif Mode == 1:  # For easy mode
         grid, complete_grid = GenerateSudoku(40)
-        original_grid = [[0 for i in range(9)] for j in range(9)]
-        for i in range(9):
-            for j in range(9):
-                original_grid[i][j] = grid[i][j]
 
     elif Mode == 2:  # For average mode
         grid, complete_grid = GenerateSudoku(32)
-        original_grid = [[0 for i in range(9)] for j in range(9)]
-        for i in range(9):
-            for j in range(9):
-                original_grid[i][j] = grid[i][j]
-
 
     elif Mode == 3:  # For hard mode
         grid, complete_grid = GenerateSudoku(25)
-        original_grid = [[0 for i in range(9)] for j in range(9)]
-        for i in range(9):
-            for j in range(9):
-                original_grid[i][j] = grid[i][j]
-    start_time = pygame.time.get_ticks()
-    Fault_Counter = 0
+
+    original_grid = [[0 for i in range(9)] for j in range(9)]
+    for i in range(9):
+        for j in range(9):
+            original_grid[i][j] = grid[i][j]
     IsSolving = False
+    guesses = [[set() for _ in range(9)] for _ in range(9)]
+    Fault_Counter = 0
+
+    start_time = pygame.time.get_ticks()
+    paused_time = 0
+    pause_start = 0
+    end_time = 0
+
+    hint_counter = 0
     pygame.init()
 
 def TimerChange():
@@ -659,6 +679,8 @@ def GameThread():
         DrawSelectedBox()
         DrawUserValue()
         DrawGuesses()
+        DrawHints()
+        DrawPause()
 
         Timer()
         Faults()
@@ -711,7 +733,7 @@ def main():
     IsFault = False
     IsTimer = True
     IsPause = False
-    IsHints = False
+    IsHints = True
     Fault_Counter = 0
 
     start_time = pygame.time.get_ticks()
