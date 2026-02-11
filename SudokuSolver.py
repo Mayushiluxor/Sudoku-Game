@@ -18,6 +18,8 @@ hidden pair -> any possiblity if there are 3 pairs? check theory
 
 check if pointed works intended now
 
+
+Intersection / Triplets next?
 '''
 
 def EasySolve(grid):
@@ -35,13 +37,13 @@ def EasySolve(grid):
     solving_grid = copy.deepcopy(grid)
 
     while counter < 81:
-        found, row, column, digit, message = LastPossibleSpot(solving_grid, possible_set)
+        found, row, column, digit, message = LastPossibleSpot(possible_set)
         if found:
             solving_grid[row][column] = digit
             possible_set = CheckPossibleSet(solving_grid)
 
         else:
-            found, row, column, digit = LastDigit(solving_grid, possible_set)
+            found, row, column, digit = LastDigit(possible_set)
             if found:
 
                 solving_grid[row][column] = digit
@@ -67,7 +69,8 @@ def EasySolvePointed(grid):
     Idee:
     while counter < 81:
         for all digits
-            check easy solve strats
+            check easy solve strats (change possible_numbers with pointed strategy)
+        early break out of while if we did not change anything (fail) or if we have finished the puzzle (success)
     return grid
     '''
     counter = 0
@@ -77,13 +80,13 @@ def EasySolvePointed(grid):
     solving_grid = copy.deepcopy(grid)
 
     while counter < 81:
-        found, row, column, digit, message = LastPossibleSpot(solving_grid, possible_set)
+        found, row, column, digit, message = LastPossibleSpot(possible_set)
         if found:
             solving_grid[row][column] = digit
             possible_set = CheckPossibleSet(solving_grid)
             possible_set, deleted = Pointed(possible_set)
         else:
-            found, row, column, digit = LastDigit(solving_grid, possible_set)
+            found, row, column, digit = LastDigit(possible_set)
             if found:
 
                 solving_grid[row][column] = digit
@@ -107,7 +110,8 @@ def EasySolvePointedAndPair(grid):
     Idee:
     while counter < 81:
         for all digits
-            check easy solve strats
+            check easy solve strats, change possible set with pointed, naked-/hidden pair strategy
+        early break out of while if we did not change anything (fail) or if we have finished the puzzle (success)
     return grid
     '''
     counter = 0
@@ -126,7 +130,7 @@ def EasySolvePointedAndPair(grid):
     solving_grid = copy.deepcopy(grid)
 
     while counter < 81:
-        found, row, column, digit, message = LastPossibleSpot(solving_grid, possible_set)
+        found, row, column, digit, message = LastPossibleSpot(possible_set)
         found_this_iteration = False
         if found:
             found_this_iteration = True
@@ -143,7 +147,7 @@ def EasySolvePointedAndPair(grid):
                 else:
                     deleted = False
         else:
-            found, row, column, digit = LastDigit(solving_grid, possible_set)
+            found, row, column, digit = LastDigit(possible_set)
             if found:
                 found_this_iteration = True
 
@@ -167,8 +171,11 @@ def EasySolvePointedAndPair(grid):
 
     return solving_grid
 
-def LastPossibleSpot(grid, possible_set):
-    #possible_set = CheckPossibleSet(grid)
+def LastPossibleSpot(possible_set):
+    '''
+    Check if there is only one possible spot for a number in a box/row/column
+    '''
+
     for digit in range(1,10,1):
         #CHECK EVERY BOX
         for box in range(9):
@@ -185,7 +192,7 @@ def LastPossibleSpot(grid, possible_set):
             if counter ==1:
                 return (True, row, column, digit, 'Box')
 
-        #CHECK EVERY ROW
+        #CHECK EVERY COLUMN
         for i in range(9):
             counter = 0
             for j in range(9):
@@ -197,7 +204,7 @@ def LastPossibleSpot(grid, possible_set):
             if counter ==1:
                 return (True, row, column, digit, 'Column')
 
-        #CHECK EVERY COLUMN
+        #CHECK EVERY ROW
         for j in range(9):
             counter = 0
             for i in range(9):
@@ -211,8 +218,10 @@ def LastPossibleSpot(grid, possible_set):
 
     return False, None, None, None, None
 
-def LastDigit(grid, possible_set):
-    #possible_set = CheckPossibleSet(grid)
+def LastDigit(possible_set):
+    '''
+    Check if there is only one possible digit in a cell
+    '''
     for digit in range(1,10,1):
         for i in range(9):
             for j in range(9):
@@ -221,6 +230,9 @@ def LastDigit(grid, possible_set):
     return (False, None, None, None)
 
 def CheckPossibleSet(grid):
+    '''
+    Easy notes, only if the digit is not in the box/row/column already then we get it in the possible set
+    '''
     possible_set_grid = [[set() for i in range(9)] for j in range(9)]
     for digit in range(1,10,1):
         for i in range(9):
@@ -232,8 +244,11 @@ def CheckPossibleSet(grid):
     return possible_set_grid
 
 def Pointed(possible_set_grid):
-    #CHECK EACH BOX FOR A POINTED PAIR/TRIPLE
-    #IF FOUND, ELIMINATE OTHER CANDIDATES FROM ROW/COLUMN
+    '''
+    Check each box if there is a pointed pair/triplet
+        pointed -> in a box can only be in a certain row, then we can eliminate all the candidates in that row in the other 2 boxes
+    '''
+
 
     deleted = False
     for digit in range(1,10,1):
@@ -301,6 +316,9 @@ def naked_pair(possible_set_grid):
                     if pairs_box[i][0] == pairs_box[j][0]:
                         found_pair.append((pairs_box[i][0],pairs_box[i][1],pairs_box[i][2], pairs_box[j][1], pairs_box[j][2]))
                         found = True
+        '''
+        Pair has been found, now eliminate these digits in any other spot of the box
+        '''
         if found:
             for pair in found_pair:
                 col_row_pair = ((pair[1], pair[2]), (pair[3], pair[4]))
@@ -328,6 +346,9 @@ def naked_pair(possible_set_grid):
                     if pairs_row[i][0] == pairs_row[j][0]:
                         found_pair.append((pairs_row[i][0],pairs_row[i][1],pairs_row[i][2], pairs_row[j][1], pairs_row[j][2]))
                         found = True
+        '''
+        Pair has been found, now eliminate these digits in any other spot of the row
+        '''
         if found:
 
             for pair in found_pair:
@@ -356,6 +377,9 @@ def naked_pair(possible_set_grid):
                     if pairs_column[i][0] == pairs_column[j][0]:
                         found_pair.append((pairs_column[i][0], pairs_column[i][1], pairs_column[i][2], pairs_column[j][1], pairs_column[j][2]))
                         found = True
+        '''
+        Pair has been found, now eliminate these digits in any other spot of the column
+        '''
         if found:
             for pair in found_pair:
                 rows = (pair[1], pair[3])
@@ -394,12 +418,16 @@ def hidden_pair(possible_set_grid):
                     counter_numbers_box[digit-1][0] +=1
                     counter_numbers_box[digit-1].append([row_box,column_box])
 
+
         for i in range(9):
             if counter_numbers_box[i][0] == 2:
                 for j in range(i+1, 9,1 ):
                     if counter_numbers_box[j][0] == 2 and counter_numbers_box[i][1] == counter_numbers_box[j][1] and counter_numbers_box[i][2] == counter_numbers_box[j][2]:
                         first_pair = counter_numbers_box[i][1]
                         second_pair = counter_numbers_box[i][2]
+                        '''
+                        Found pair, now eliminate any other digit in these 2 spots
+                        '''
                         for digits in range(9):
                             if digits != i and digits != j and digits+1 in possible_set_grid[start_row+first_pair[0]][start_column+first_pair[1]]:
                                 possible_set_grid[start_row+first_pair[0]][start_column+first_pair[1]].remove(digits+1)
@@ -423,7 +451,9 @@ def hidden_pair(possible_set_grid):
             if counter_numbers_row[i][0] == 2:
                 for j in range(i+1, 9, 1):
                     if counter_numbers_row[j][0] == 2 and counter_numbers_row[i][1] == counter_numbers_row[j][1] and counter_numbers_row[i][2] == counter_numbers_row[j][2]:
-
+                        '''
+                        Found pair, now eliminate any other digit in these 2 spots
+                        '''
                         for digits in range(9):
                             if digits != i and digits != j and (digits+1) in possible_set_grid[row][counter_numbers_row[i][1]]:
                                 possible_set_grid[row][counter_numbers_row[i][1]].remove(digits+1)
@@ -443,7 +473,9 @@ def hidden_pair(possible_set_grid):
             if counter_numbers_column[i][0] == 2:
                 for j in range(i+1, 9, 1):
                     if counter_numbers_column[j][0] == 2 and counter_numbers_column[i][1] == counter_numbers_column[j][1] and counter_numbers_column[i][2] == counter_numbers_column[j][2]:
-
+                        '''
+                        Found pair, now eliminate any other digit in these 2 spots
+                        '''
                         for digits in range(9):
                             if digits != i and digits != j and (digits+1) in possible_set_grid[counter_numbers_column[i][1]][column]:
                                 possible_set_grid[counter_numbers_column[i][1]][column].remove(digits+1)
@@ -458,15 +490,20 @@ def hidden_pair(possible_set_grid):
 
 
 def CheckOneSlot(grid):
+    '''
+    For hints in the sudoku app
+    Only check one possible next digit
+    Similar to EasySolve(), but we only do one iteration and return the solution + some extra information about it
+    '''
     solving_grid = copy.deepcopy(grid)
     possible_set = CheckPossibleSet(solving_grid)
-    found, row, column, digit, message = LastPossibleSpot(solving_grid, possible_set)
+    found, row, column, digit, message = LastPossibleSpot(possible_set)
 
     if found:
         which_row_col_box = 'Last Spot ' + message
         return found, row, column, digit, which_row_col_box
     else:
-        found, row, column, digit = LastDigit(solving_grid, possible_set)
+        found, row, column, digit = LastDigit(possible_set)
         if found:
             return found, row, column, digit, 'Last Digit'
         else:
@@ -482,12 +519,12 @@ def CheckOneSlot(grid):
                     deleted = False
 
 
-            found, row, column, digit, message = LastPossibleSpot(solving_grid, possible_set)
+            found, row, column, digit, message = LastPossibleSpot(possible_set)
             if found:
                 which_row_col_box = 'Last Spot ' + message
                 return found, row, column, digit,which_row_col_box
             else:
-                found, row, column, digit = LastDigit(solving_grid, possible_set)
+                found, row, column, digit = LastDigit(possible_set)
                 if found:
                     return found, row, column, digit, 'Last Digit'
                 else:
@@ -497,6 +534,9 @@ def CheckOneSlot(grid):
 
 
 def isValid(grid, row, col, digit):
+    '''
+    return True if digit is possible in a cell after checking for the same digit in the box/row/column
+    '''
     for i in range(9):
         if grid[i][col] == digit:
             return False
@@ -513,6 +553,13 @@ def isValid(grid, row, col, digit):
     return True
 
 def SolveGrid(grid, row, col, solutions, first_solution):
+    '''
+    Solving sudoku with brute force backtracking
+    Possible improvement if using the possible sets to eliminate more candidates
+    currently trying all digits without extra notes strategies
+
+    Returning up to 2 different solutions to the sudoku to check for uniqueness
+    '''
     if row == 8 and col == 9:
         if solutions == 0:
             first_solution.append(copy.deepcopy(grid))
@@ -536,6 +583,9 @@ def SolveGrid(grid, row, col, solutions, first_solution):
 
 
 def SudokuGrid(grid):
+    '''
+    Solve a given sudoku
+    '''
     global first_solution
     first_solution = []
     grid2 = copy.deepcopy(grid)
@@ -553,6 +603,9 @@ def SudokuGrid(grid):
 ------------------------------------------------------------------------------------------------------------------------
 '''
 def GenerateFilledGrid():
+    '''
+    Start from randomly shuffled first row and zeros elsewhere, filled the sudoku grid
+    '''
     random_first_row = [i + 1 for i in range(9)]
     random.shuffle(random_first_row)
     random_grid = [[0 for i in range(9)] for j in range(9)]
@@ -561,8 +614,18 @@ def GenerateFilledGrid():
     return grid
 
 
-def GenerateSudoku(number_of_digits):
-    # Go through randomized list of the 81 digits,
+def GenerateSudoku(number_of_digits, daily):
+    '''
+    Generate a sudoku with number_of_digits amount of given digits
+
+    To get more randomness, we swap the digits in the filled grid
+    Then we go through every cell in the grid randomly and try if the sudoku is still uniquely solvable if we eliminate that digit
+        if unique -> eliminate
+        if not unique -> leave the digit in the cell
+    Until we have either eliminated enough digits or we have tried every cell in the grid
+    '''
+    if not daily:
+        random.seed()
 
     temp = list(range(81))
     random.shuffle(temp)
@@ -601,9 +664,12 @@ def GenerateSudoku(number_of_digits):
         return complete_grid_swapped, complete_grid
     else:
 
-        return GenerateSudoku(number_of_digits)
+        return GenerateSudoku(number_of_digits, daily=False)
 
 def SwapDigitsRandom(grid):
+    '''
+    To work against similar numbers in similar spots, randomly map the digits to different digits
+    '''
     temp = list(range(9))
     random.shuffle(temp)
 
@@ -617,6 +683,9 @@ def SwapDigitsRandom(grid):
     return swappedGrid
 
 def GenerateDailySudoku():
+    '''
+    Generate a sudoku which has a seed specific for each day
+    '''
     current_day = datetime.datetime.today().day
     current_month = datetime.datetime.today().month
     current_year = datetime.datetime.today().year
@@ -627,7 +696,7 @@ def GenerateDailySudoku():
     rand_int = random.randint(1, 14)
     rand_amount_digits = 24 + rand_int
 
-    grid, complete_grid = GenerateSudoku(rand_amount_digits)
+    grid, complete_grid = GenerateSudoku(rand_amount_digits, daily=True)
     return grid, complete_grid
 
 
