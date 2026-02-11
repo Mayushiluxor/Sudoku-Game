@@ -55,13 +55,17 @@ HIGHLIGHT HINT CHANGE MAYBE?
 SAVING MIGHT WORK
 
 BUG? SINCE RANDOM SEED BEING SET ONCE DAILY IS USED
+
+SOLVE TIMER FOR LOADED GAME
 TODO:
 
 CONTROLLER 
 
 INGAME MUSIC
 
-
+Current question : when do we want to save ? 
+    -   ever iteration of the gameloop to save the current state in case game crashes
+    -   just at the end / button to save to have a controlled load/save
 
 
 '''
@@ -736,11 +740,12 @@ def Timer():
     '''
     Draw timer if currently solving (not done with a sudoku) and not paused
     '''
-    global IsTimer
+    global IsTimer, elapsed_ms
     if not IsSolving:
         if not IsPause:
             if IsTimer:
                 current_time = pygame.time.get_ticks()
+
                 elapsed_ms = current_time - start_time - paused_time
                 elapsed_seconds = elapsed_ms // 1000
 
@@ -760,7 +765,7 @@ def Timer():
 
 def SaveFile():
     global width_screen, height_screen, screen, inc, a_font, b_font, c_font
-    global start_time, paused_time, pause_start
+    global start_time, paused_time, pause_start, elapsed_ms
     global grid, complete_grid, original_grid, guesses, counter
     global x, y, UserValue, GuessValue,  hint_counter
     global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, Fault_Counter
@@ -774,8 +779,6 @@ def SaveFile():
     shelfFile['original_grid'] = original_grid
     shelfFile['guesses'] = guesses
     shelfFile['counter'] = counter
-    shelfFile['x'] = x
-    shelfFile['y'] = y
     shelfFile['hint_counter'] = hint_counter
     shelfFile['IsRunning'] = IsRunning
     shelfFile['IsSolving'] = IsSolving
@@ -784,19 +787,35 @@ def SaveFile():
     shelfFile['IsPause'] = IsPause
     shelfFile['IsHints'] = IsHints
     shelfFile['Fault_Counter'] = Fault_Counter
+    shelfFile['elapsed_ms'] = elapsed_ms
 
     shelfFile.close()
 
 def LoadFile():
     global width_screen, height_screen, screen, inc, a_font, b_font, c_font
-    global start_time, paused_time, pause_start
+    global start_time, paused_time, pause_start, elapsed_ms
     global grid, complete_grid, original_grid, guesses, counter
-    global x, y, UserValue, GuessValue, hint_counter, times_played
+    global x, y, UserValue, GuessValue, hint_counter
     global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, Fault_Counter
 
+    width_screen = 500
+    height_screen = 850
+    pygame.font.init()
+    screen = pygame.display.set_mode((width_screen, height_screen))  # Window size
+    screen.fill((255, 255, 255))
+    pygame.display.set_caption("SudokuApp")
+    a_font = pygame.font.SysFont("times", 30, "bold")  # Different fonts to be used
+    b_font = pygame.font.SysFont("times", 15, "bold")
+    c_font = pygame.font.SysFont("times", 30, False)
+
+    inc = width_screen // 9  # Screen size // Number of boxes = each increment
+    x = 0
+    y = 0
+    UserValue = 0
+    GuessValue = 0
     try:
         shelfFile = shelve.open('save')
-        start_time = shelfFile['start_time']
+        start_time = -shelfFile['elapsed_ms']
         paused_time = shelfFile['paused_time']
         pause_start = shelfFile['pause_start']
         grid = shelfFile['grid']
@@ -804,8 +823,6 @@ def LoadFile():
         original_grid = shelfFile['original_grid']
         guesses = shelfFile['guesses']
         counter = shelfFile['counter']
-        x = shelfFile['x']
-        y = shelfFile['y']
         hint_counter = shelfFile['hint_counter']
         IsRunning = shelfFile['IsRunning']
         IsSolving = shelfFile['IsSolving']
@@ -814,9 +831,32 @@ def LoadFile():
         IsPause = shelfFile['IsPause']
         IsHints = shelfFile['IsHints']
         Fault_Counter = shelfFile['Fault_Counter']
+        #elapsed_ms = shelfFile['elapsed_ms']
         shelfFile.close()
+
     except:
-        DisplayMessage('Nothing loaded', 1000, (255,0,0))
+        print('didnt work')
+        grid, complete_grid = GenerateSudoku(30, False)
+        original_grid = [[0 for i in range(9)] for j in range(9)]
+        for i in range(9):
+            for j in range(9):
+                original_grid[i][j] = grid[i][j]
+        IsRunning = True
+        IsSolving = False
+        guesses = [[set() for i in range(9)] for j in range(9)]
+        IsFault = False
+        IsTimer = True
+        IsPause = False
+        IsHints = True
+        Fault_Counter = 0
+
+        elapsed_ms = 0
+        start_time = pygame.time.get_ticks()
+        paused_time = 0
+        pause_start = 0
+
+        hint_counter = 0
+        counter = CheckCounter()
 
 def InitializeComponent():
     '''
@@ -839,6 +879,9 @@ def GameThread():
 
     while IsRunning:
         HandleEvents()
+
+
+
         DrawGrid()
         counter = CheckCounter()
         DrawCounter()
@@ -852,7 +895,7 @@ def GameThread():
         Faults()
         Hints()
         Pause()
-
+        SaveFile()
         pygame.display.update()
 
 
@@ -886,11 +929,12 @@ def main():
     '''
 
     global width_screen, height_screen, screen, inc, a_font, b_font, c_font
-    global start_time, paused_time, pause_start
+    global start_time, paused_time, pause_start, elapsed_till_now
     global grid, complete_grid, original_grid, guesses, counter
-    global x, y, UserValue, GuessValue,  hint_counter, times_played
+    global x, y, UserValue, GuessValue,  hint_counter
     global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, Fault_Counter
 
+    '''
     width_screen = 500
     height_screen = 850
     pygame.font.init()
@@ -919,7 +963,6 @@ def main():
     IsPause = False
     IsHints = True
     Fault_Counter = 0
-    times_played = 0
 
     start_time = pygame.time.get_ticks()
     paused_time = 0
@@ -928,10 +971,9 @@ def main():
 
     hint_counter = 0
     counter = CheckCounter()
+    '''
 
-    #SaveFile()
-
-    #LoadFile()
+    LoadFile()
 
     pygame.init()
 
