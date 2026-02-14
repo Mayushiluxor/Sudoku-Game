@@ -1,6 +1,8 @@
 import sys
 import shelve
 
+from pygame import RESIZABLE
+
 if not sys.stdout:
     class Dummy:
         def write(self, msg): pass
@@ -68,6 +70,11 @@ Current question : when do we want to save ?
     -   just at the end / button to save to have a controlled load/save
 
 
+CHECK IF VARIABLE WORKS IN ALL
+
+THINKING ABOUT SWAPPING LAYOUT, MODES / SETTINGS TO RIGHT SIDE
+
+EXTENSION DOESNT ALWAYS WORK
 '''
 
 
@@ -115,8 +122,8 @@ def DrawGrid():
             width = 6  # every 3 small boxes -> thicker line
         else:
             width = 3
-        pygame.draw.line(screen, (0, 0, 0), (i * inc, 0), (i * inc, width_screen-4), width)  # vertical
-        pygame.draw.line(screen, (0, 0, 0), (0, i * inc), (width_screen-4, i * inc), width)  # horizontal
+        pygame.draw.line(screen, (0, 0, 0), (i * inc, 0), (i * inc, width_sudoku-4), width)  # vertical
+        pygame.draw.line(screen, (0, 0, 0), (0, i * inc), (width_sudoku-4, i * inc), width)  # horizontal
 
 
 
@@ -129,7 +136,7 @@ def SetMousePosition(p):
         it is a bit below the grid (where the numbers being counted are)
     '''
     global x, y, complete_grid, counter, original_grid
-    if p[0] < width_screen and p[1] < width_screen + 80:
+    if p[0] < width_sudoku and p[1] < width_sudoku + 80:
         x = p[0] // inc
         y = p[1] // inc
 
@@ -198,11 +205,37 @@ def InsertValue(Value):
     '''
     Insert the given value into the cell, clear the guesses
     '''
-    global grid, complete_grid, counter, original_grid
+    global grid, complete_grid, counter, original_grid, IsSmartNotes
     grid[int(x)][int(y)] = Value
     guesses[x][y].clear()
     text = a_font.render(str(Value), True, (0, 0, 0))
     screen.blit(text, (x * inc + 18, y * inc + 10))
+    '''
+    if "smart notes" is on, clear notes in the box/column/row with number "Value"
+    '''
+    if IsSmartNotes:
+        '''
+        Check box
+        '''
+        start_row = x - (x % 3)
+        start_col = y - (y % 3)
+        for row in range(3):
+            for col in range(3):
+                if Value in guesses[start_row+row][start_col+col]:
+                    guesses[start_row + row][start_col + col].remove(Value)
+        '''
+        Check row
+        '''
+        for i in range(9):
+            if Value in guesses[x][i]:
+                guesses[x][i].remove(Value)
+        '''
+        Check column
+        '''
+        for j in range(9):
+            if Value in guesses[j][y]:
+                guesses[j][y].remove(Value)
+
 
 
 
@@ -303,12 +336,13 @@ def DrawHints():
     global grid, complete_grid, original_grid, IsHints
     AttributeFont = pygame.font.SysFont("times", 20)
     TitleFont = pygame.font.SysFont("times", 20, "bold")
+    font = pygame.font.SysFont(None, 30)
 
-    pygame.draw.rect(screen, (255,255,255), rect = (370, 705, 80, 20))
+    pygame.draw.rect(screen, (255,255,255), rect = (760, 205, 80, 20))
     if IsHints:
-        screen.blit(AttributeFont.render("Solved", True, (0, 0, 0)), (370, 705))
+        screen.blit(font.render("Solved", True, (0, 0, 0)), (760, 205))
     else:
-        screen.blit(AttributeFont.render("Unsolved", True, (0, 0, 0)), (370, 705))
+        screen.blit(font.render("Unsolved", True, (0, 0, 0)), (760, 205))
 
 def DrawPause():
     '''
@@ -317,9 +351,10 @@ def DrawPause():
     global IsPause
     AttributeFont = pygame.font.SysFont("times", 20)
     TitleFont = pygame.font.SysFont("times", 20, "bold")
-    pygame.draw.rect(screen, (255, 255, 255), rect=(370, 730, 80, 20))
+    font = pygame.font.SysFont(None, 30)
+    pygame.draw.rect(screen, (255, 255, 255), rect=(760, 280, 80, 20))
     if IsPause:
-        screen.blit(AttributeFont.render("Paused", True, (0, 0, 0)), (370, 730))
+        screen.blit(font.render("Paused", True, (0, 0, 0)), (760, 280))
 
 
 def DrawModes():
@@ -330,20 +365,21 @@ def DrawModes():
     TitleFont = pygame.font.SysFont("times", 20, "bold")
     AttributeFont = pygame.font.SysFont("times", 20)
 
-    screen.blit(AttributeFont.render("D: Daily", True, (0, 0, 0)), (30, 630))
-    screen.blit(TitleFont.render("Modes", True, (0, 0, 0)), (15, 605))
-    screen.blit(AttributeFont.render("E: Easy", True, (0, 0, 0)), (30, 655))
-    screen.blit(AttributeFont.render("A: Average", True, (0, 0, 0)), (30, 680))
-    screen.blit(AttributeFont.render("H: Hard", True, (0, 0, 0)), (30, 705))
-    screen.blit(TitleFont.render("Settings", True, (0, 0, 0)), (160, 605))
-    screen.blit(AttributeFont.render("T: Timer on/off", True, (0, 0, 0)), (175, 630))
-    screen.blit(AttributeFont.render("F: Faults on/off", True, (0, 0, 0)), (175, 655))
-    screen.blit(AttributeFont.render("Hints used", True, (0, 0, 0)), (175, 680))
 
-
-    screen.blit(AttributeFont.render("S: Hints", True, (0, 0, 0)), (175, 705))
-    screen.blit(AttributeFont.render("P: Pause", True, (0, 0, 0)), (175, 730))
-    screen.blit(AttributeFont.render("L: Load last reset", True, (0, 0, 0)), (175, 755))
+    screen.blit(TitleFont.render("Modes", True, (0, 0, 0)), (545, 5))
+    screen.blit(AttributeFont.render("D: Daily", True, (0, 0, 0)), (560, 30))
+    screen.blit(AttributeFont.render("E: Easy", True, (0, 0, 0)), (560, 55))
+    screen.blit(AttributeFont.render("A: Average", True, (0, 0, 0)), (560, 80))
+    screen.blit(AttributeFont.render("H: Hard", True, (0, 0, 0)), (560, 105))
+    screen.blit(TitleFont.render("Settings", True, (0, 0, 0)), (545, 130))
+    screen.blit(AttributeFont.render("T: Timer on/off", True, (0, 0, 0)), (560, 155))
+    screen.blit(AttributeFont.render("F: Faults on/off", True, (0, 0, 0)), (560, 180))
+    #screen.blit(AttributeFont.render("Hints used", True, (0, 0, 0)), (560, 230))
+    screen.blit(AttributeFont.render("S: Hint settings", True, (0, 0, 0)), (560, 205))
+    screen.blit(AttributeFont.render("P: Pause", True, (0, 0, 0)), (560, 280))
+    screen.blit(AttributeFont.render("L: Auto Delete Notes", True, (0, 0, 0)), (560, 230))
+    screen.blit(AttributeFont.render("Shift + Number: Note", True, (0, 0, 0)), (560, 305))
+    screen.blit(AttributeFont.render("G: Hint", True, (0, 0, 0)), (560, 255))
 
 def CheckAndDraw():
     '''
@@ -363,11 +399,6 @@ def CheckAndDraw():
         else:
             message = which
         DisplayMessage(message, 1000, (0, 0, 0))
-        DrawGrid()
-        DrawCounter()
-        Timer()
-        pygame.display.update()
-        time.sleep(1)
         pygame.draw.rect(screen, (255, 229, 204), (row_sol * inc, col_sol * inc, inc + 1, inc + 1))
         if len(guesses[row_sol][col_sol]) > 0:
             pygame.draw.rect(screen, (255, 229, 204), (row_sol * inc, col_sol * inc, inc + 1, inc + 1))
@@ -398,7 +429,7 @@ def DrawSolveButton():
     global grid, complete_grid, counter, original_grid
     events = pygame.event.get()
     Button = pw.button.Button(
-        screen, 350, 785, 120, 50, text='Hint',
+        screen, 750, 530, 120, 50, text='Hint',
         fontSize=20, margin=20,
         inactiveColour=(255, 204, 204),
         hoverColour=(255,229,204),
@@ -408,6 +439,23 @@ def DrawSolveButton():
     Button.draw()
     pw.update(events)
 
+def DrawExtendButton():
+    '''
+    Draw the button for the extension
+
+    '''
+    global grid, complete_grid, counter, original_grid
+    events = pygame.event.get()
+    Button = pw.button.Button(
+        screen, 505, 0, 30, 600, text='<->',
+        fontSize=20, margin=20,
+        inactiveColour=(255, 204, 204),
+        hoverColour=(255,229,204),
+        pressedColour=(0, 0, 0),
+        onClick=lambda: IncreaseWindow())
+
+    Button.draw()
+    pw.update(events)
 
 def DisplayMessage(Message, Interval, Color):
     '''
@@ -417,12 +465,14 @@ def DisplayMessage(Message, Interval, Color):
         a color the message should be displayed in
     '''
     global grid, complete_grid, counter, original_grid
-    screen.blit(a_font.render(Message, True, Color), (70, 790))
+
+    screen.blit(a_font.render(Message, True, Color), (545, 540))
     pygame.display.update()
     pygame.time.delay(Interval)
     screen.fill((255, 255, 255))
     DrawModes()
-    DrawSolveButton()
+    DrawExtendButton()
+    #DrawSolveButton()
 
 
 def SetGridMode(Mode):
@@ -435,7 +485,8 @@ def SetGridMode(Mode):
     global guesses, IsFault, IsTimer, IsPause, IsHints, paused_time, pause_start
     screen.fill((255, 255, 255))
     DrawModes()
-    DrawSolveButton()
+    DrawExtendButton()
+    #DrawSolveButton()
     if Mode == 0:
         grid, complete_grid = GenerateDailySudoku()
 
@@ -483,6 +534,12 @@ def FaultChange():
         IsFault = False
     else:
         IsFault = True
+def SmartNotesChange():
+    global IsSmartNotes
+    if IsSmartNotes == True:
+        IsSmartNotes = False
+    else:
+        IsSmartNotes = True
 
 def PauseChange():
     '''
@@ -509,9 +566,23 @@ def Pause():
             width = 6  # every 3 small boxes -> thicker line
         else:
             width = 3
-        pygame.draw.line(screen, (0, 0, 0), (i * inc, 0), (i * inc, width_screen-4), width)  # vertical
-        pygame.draw.line(screen, (0, 0, 0), (0, i * inc), (width_screen-4, i * inc), width)  # horizontal
+        pygame.draw.line(screen, (0, 0, 0), (i * inc, 0), (i * inc, width_sudoku - 4), width)  # vertical
+        pygame.draw.line(screen, (0, 0, 0), (0, i * inc), (width_sudoku - 4, i * inc), width)  # horizontal
 
+
+def IncreaseWindow():
+    global IsExtended, screen, width_screen, height_screen
+    if IsExtended:
+        width_screen = 890
+        screen = pygame.display.set_mode((width_screen, height_screen), RESIZABLE)
+        screen.fill((255, 255, 255))
+        DrawModes()
+        IsExtended = False
+    else:
+        width_screen = 535
+        screen = pygame.display.set_mode((width_screen, height_screen), RESIZABLE)
+        screen.fill((255, 255, 255))
+        IsExtended = True
 
 
 def HandleEvents():
@@ -539,9 +610,6 @@ def HandleEvents():
                     y -= 1
                 if event.key == pygame.K_DOWN:
                     y += 1
-
-                #if event.key == pygame.K_1:
-                #    UserValue = 1
                 if event.key == pygame.K_1:
                     if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                         GuessValue = 1
@@ -605,7 +673,9 @@ def HandleEvents():
                 if event.key == pygame.K_s:
                     HintsChange()
                 if event.key == pygame.K_l:
-                    LoadFile()
+                    SmartNotesChange()
+                if event.key == pygame.K_g:
+                    CheckAndDraw()
             else:
                 if event.key == pygame.K_d:
                     SetGridMode(0)
@@ -617,16 +687,9 @@ def HandleEvents():
                     SetGridMode(3)
                 IsSolving = False
 
-    Button = pw.button.Button(
-        screen, 350, 785, 120, 50, text='Hint',
-        fontSize=20, margin=20,
-        inactiveColour=(255, 204, 204),
-        hoverColour=(255,229,204),
-        pressedColour=(0, 255, 0), radius=20,
-        onClick=lambda: CheckAndDraw())
 
-    Button.draw()
-    pw.update(events)
+    DrawExtendButton()
+    #DrawSolveButton()
 
 
 
@@ -661,8 +724,8 @@ def DrawUserValue():
 
 
                         pygame.draw.rect(screen, (255, 255, 255), (375, 600, 100, 100))
-                        screen.blit(time_surface, (375, 630))
-
+                        screen.blit(time_surface, (875, 130))
+                    SaveFile()
 
 
                 else:
@@ -698,10 +761,6 @@ def DrawUserValue():
                             paused_time = 0
                             pygame.init()
 
-
-
-                    #DisplayMessage("Incorrect Value", 500, (255, 0, 0))
-
                 for i in range(9):
                     text = a_font.render(str(i + 1), True, (0, 0, 0))
                     screen.blit(text, (i * inc + 18, 510))
@@ -721,20 +780,36 @@ def Faults():
         font = pygame.font.SysFont(None, 30)
         time_surface = font.render(fault_string, True, (0, 0, 0))
 
-        pygame.draw.rect(screen, (255,255,255), (375, 655, 70, 25))
-        screen.blit(time_surface, (375, 655))
+        pygame.draw.rect(screen, (255,255,255), (760, 180, 70, 25))
+        screen.blit(time_surface, (760, 180))
 
 def Hints():
     '''
     Draw hint counter
     '''
     global hint_counter
-    pygame.draw.rect(screen, (255, 255, 255), (375, 680, 70, 25))
+    pygame.draw.rect(screen, (255, 255, 255), (760, 255, 70, 25))
 
     font = pygame.font.SysFont(None, 30)
-    hint_text = str(hint_counter)
+    hint_text = str('Used ')+str(hint_counter)
     hint_surface = font.render(hint_text, True, (0, 0, 0))
-    screen.blit(hint_surface, (375, 680))
+    screen.blit(hint_surface, (760, 255))
+
+def DrawSmartNotes():
+    '''
+    Draw in settings if smart notes are on or not
+    '''
+    global IsSmartNotes
+    AttributeFont = pygame.font.SysFont("times", 20)
+    TitleFont = pygame.font.SysFont("times", 20, "bold")
+    font = pygame.font.SysFont(None, 30)
+
+    pygame.draw.rect(screen, (255, 255, 255), rect=(760, 230, 80, 20))
+    if IsSmartNotes:
+        screen.blit(font.render("On", True, (0, 0, 0)), (760, 230))
+    else:
+        screen.blit(font.render("Off", True, (0, 0, 0)), (760, 230))
+
 
 def Timer():
     '''
@@ -756,21 +831,24 @@ def Timer():
                 font = pygame.font.SysFont(None, 30)
                 time_surface = font.render(time_string, True, (0, 0, 0))
 
-                pygame.draw.rect(screen, (255, 255, 255), (375,600,100,100))
-                screen.blit(time_surface, (375, 630))
+                pygame.draw.rect(screen, (255,255,255), (760,155,100,100))
+                screen.blit(time_surface, (760, 155))
             else:
-                pygame.draw.rect(screen, (255, 255, 255), (375, 600, 100, 100))
+                pygame.draw.rect(screen, (255, 255, 255), (760, 155, 100, 100))
     else:
         pass
 
 def SaveFile():
-    global width_screen, height_screen, screen, inc, a_font, b_font, c_font
+    global width_screen, height_screen, width_sudoku, screen, inc, a_font, b_font, c_font
     global start_time, paused_time, pause_start, elapsed_ms
     global grid, complete_grid, original_grid, guesses, counter
     global x, y, UserValue, GuessValue,  hint_counter
-    global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, Fault_Counter
+    global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, IsSmartNotes, IsExtended, Fault_Counter
 
     shelfFile = shelve.open('save')
+    shelfFile["width_sudoku"] = width_sudoku
+    shelfFile["height_screen"] = height_screen
+    shelfFile["width_screen"] = width_screen
     shelfFile['start_time'] =  start_time
     shelfFile['paused_time'] = paused_time
     shelfFile['pause_start'] = pause_start
@@ -786,29 +864,32 @@ def SaveFile():
     shelfFile['IsTimer'] = IsTimer
     shelfFile['IsPause'] = IsPause
     shelfFile['IsHints'] = IsHints
+    shelfFile['IsExtended'] = IsExtended
     shelfFile['Fault_Counter'] = Fault_Counter
     shelfFile['elapsed_ms'] = elapsed_ms
+    shelfFile['IsSmartNotes'] = IsSmartNotes
 
     shelfFile.close()
 
 def LoadFile():
-    global width_screen, height_screen, screen, inc, a_font, b_font, c_font
+    global width_screen, height_screen, width_sudoku, screen, inc, a_font, b_font, c_font
     global start_time, paused_time, pause_start, elapsed_ms
     global grid, complete_grid, original_grid, guesses, counter
     global x, y, UserValue, GuessValue, hint_counter
-    global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, Fault_Counter
+    global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, IsSmartNotes, IsExtended, Fault_Counter
 
-    width_screen = 500
-    height_screen = 850
+    width_screen = 880
+    width_sudoku = 500
+    height_screen = 600
     pygame.font.init()
-    screen = pygame.display.set_mode((width_screen, height_screen))  # Window size
+    screen = pygame.display.set_mode((width_screen, height_screen), RESIZABLE)  # Window size
     screen.fill((255, 255, 255))
     pygame.display.set_caption("SudokuApp")
     a_font = pygame.font.SysFont("times", 30, "bold")  # Different fonts to be used
     b_font = pygame.font.SysFont("times", 15, "bold")
     c_font = pygame.font.SysFont("times", 30, False)
 
-    inc = width_screen // 9  # Screen size // Number of boxes = each increment
+    inc = width_sudoku // 9  # Screen size // Number of boxes = each increment
     x = 0
     y = 0
     UserValue = 0
@@ -830,12 +911,13 @@ def LoadFile():
         IsTimer = shelfFile['IsTimer']
         IsPause = shelfFile['IsPause']
         IsHints = shelfFile['IsHints']
+        IsSmartNotes = shelfFile['IsSmartNotes']
+        IsExtended = shelfFile['IsExtended']
         Fault_Counter = shelfFile['Fault_Counter']
         #elapsed_ms = shelfFile['elapsed_ms']
         shelfFile.close()
 
     except:
-        print('didnt work')
         grid, complete_grid = GenerateSudoku(30, False)
         original_grid = [[0 for i in range(9)] for j in range(9)]
         for i in range(9):
@@ -848,6 +930,8 @@ def LoadFile():
         IsTimer = True
         IsPause = False
         IsHints = True
+        IsSmartNotes = True
+        IsExtended = True
         Fault_Counter = 0
 
         elapsed_ms = 0
@@ -866,7 +950,8 @@ def InitializeComponent():
     DrawGrid()
     DrawSelectedBox()
     DrawModes()
-    DrawSolveButton()
+    DrawExtendButton()
+    #DrawSolveButton()
     pygame.display.update()
 
 
@@ -875,27 +960,28 @@ def GameThread():
     Game Loop, drawing whole surface every time
     '''
     global grid, complete_grid, counter, original_grid, start_time
+    LoadFile()
     InitializeComponent()
+
+    pygame.init()
 
     while IsRunning:
         HandleEvents()
-
-
-
         DrawGrid()
         counter = CheckCounter()
         DrawCounter()
         DrawSelectedBox()
         DrawUserValue()
+
+
+        Timer()
         DrawGuesses()
         DrawHints()
         DrawPause()
-
-        Timer()
+        DrawSmartNotes()
         Faults()
         Hints()
         Pause()
-        SaveFile()
         pygame.display.update()
 
 
@@ -928,54 +1014,12 @@ def main():
     IsFault, IsTimer,IsPuase,IsHints            -> Changing settings
     '''
 
-    global width_screen, height_screen, screen, inc, a_font, b_font, c_font
+    global width_sudoku, height_screen, screen, inc, a_font, b_font, c_font
     global start_time, paused_time, pause_start, elapsed_till_now
     global grid, complete_grid, original_grid, guesses, counter
     global x, y, UserValue, GuessValue,  hint_counter
-    global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, Fault_Counter
+    global IsRunning, IsSolving, IsFault, IsTimer, IsPause, IsHints, IsSmartNotes, IsExtended, Fault_Counter
 
-    '''
-    width_screen = 500
-    height_screen = 850
-    pygame.font.init()
-    screen = pygame.display.set_mode((width_screen, height_screen))  # Window size
-    screen.fill((255, 255, 255))
-    pygame.display.set_caption("SudokuApp")
-    a_font = pygame.font.SysFont("times", 30, "bold")  # Different fonts to be used
-    b_font = pygame.font.SysFont("times", 15, "bold")
-    c_font = pygame.font.SysFont("times", 30, False)
-
-    inc = width_screen // 9  # Screen size // Number of boxes = each increment
-    x = 0
-    y = 0
-    UserValue = 0
-    GuessValue = 0
-    grid, complete_grid = GenerateSudoku(30, False)
-    original_grid = [[0 for i in range(9)] for j in range(9)]
-    for i in range(9):
-        for j in range(9):
-            original_grid[i][j] = grid[i][j]
-    IsRunning = True
-    IsSolving = False
-    guesses = [[set() for _ in range(9)] for _ in range(9)]
-    IsFault = False
-    IsTimer = True
-    IsPause = False
-    IsHints = True
-    Fault_Counter = 0
-
-    start_time = pygame.time.get_ticks()
-    paused_time = 0
-    pause_start = 0
-
-
-    hint_counter = 0
-    counter = CheckCounter()
-    '''
-
-    LoadFile()
-
-    pygame.init()
 
 
     GameThread()
